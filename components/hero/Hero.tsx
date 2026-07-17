@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { MeshGradient, PulsingBorder } from "@paper-design/shaders-react"
 import { motion } from "framer-motion"
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -93,83 +94,90 @@ export default function Hero() {
         speed={0.2}
       />
 
-      <header className="relative z-50 flex items-center justify-between p-6">
-        <motion.div
-          className="flex items-center group cursor-pointer"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
+      <header className="relative z-50 grid grid-cols-3 items-center p-6">
+        {/* StudentProof Logo */}
+        <div className="flex justify-start">
           <motion.div
-            className="text-3xl font-bold tracking-tight select-none"
-            whileHover={{ scale: 1.03 }}
+            className="relative flex items-center group cursor-pointer"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
-            <span className="text-white">Student</span>
-            <span
-              className="bg-gradient-to-r from-cyan-400 to-orange-400 bg-clip-text text-transparent"
-            >
-              Proof
-            </span>
-          </motion.div>
-
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            {[
-              { left: "22%", top: "28%" },
-              { left: "35%", top: "55%" },
-              { left: "48%", top: "35%" },
-              { left: "62%", top: "70%" },
-              { left: "76%", top: "45%" },
-              { left: "85%", top: "60%" },
-            ].map((particle, i) => (
+            <Link href="/">
               <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-white/60 rounded-full"
-                style={{
-                  left: particle.left,
-                  top: particle.top,
-                }}
-                animate={{
-                  y: [-10, -20, -10],
-                  x: [0, offsets[i], 0],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  delay: i * 0.2,
-                  ease: "easeInOut",
-                }}
-              />
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Navigation */}
-        <nav className="flex items-center space-x-2">
+                className="text-3xl font-bold tracking-tight select-none"
+                whileHover={{ scale: 1.03 }}
+              >
+                <span className="text-white">Student</span>
+                <span className="bg-gradient-to-r from-cyan-400 to-orange-400 bg-clip-text text-transparent">
+                  Proof
+                </span>
+              </motion.div>
+            </Link>
+          </motion.div>
+        </div>
+      
+        {/* Nav bar */}
+        <nav className="flex items-center justify-center gap-8">
           <Link
             href="/docs"
-            className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
+            className="text-white/80 hover:text-white text-xs font-light transition-colors duration-200"
           >
             DOCS
           </Link>
+      
           <Link
             href="/sdk"
-            className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
+            className="text-white/80 hover:text-white text-xs font-light transition-colors duration-200"
           >
             SDK
           </Link>
-        </nav>
 
-        {/* Login Button Group with Arrow */}
-        <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }}>
-          <button className="absolute right-0 px-2.5 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center justify-center -translate-x-10 group-hover:-translate-x-19 z-0">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
-            </svg>
-          </button>
-          <button className="px-6 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center z-10">
-            Login
-          </button>
+          <Link
+            href="/api"
+            className="text-white/80 hover:text-white text-xs font-light transition-colors duration-200"
+          >
+            API
+          </Link>
+      
+          <Link
+            href="https://github.com/dhanush-devx/StudentProof"
+            target="_blank"
+            className="text-white/80 hover:text-white text-xs font-light transition-colors duration-200"
+          >
+            GitHub
+          </Link>
+        </nav>
+      
+        {/* Login button group with arrow */}
+        <div className="flex justify-end">
+          <div
+            id="gooey-btn"
+            className="relative flex items-center group"
+            style={{ filter: "url(#gooey-filter)" }}
+          >
+            <button className="absolute right-0 px-2.5 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center justify-center -translate-x-10 group-hover:-translate-x-19 z-0">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 17L17 7M17 7H7M17 7V17"
+                />
+              </svg>
+            </button>
+      
+            <button
+              onClick={() => signIn("google", { redirectTo: "/dashboard" })}
+              className="px-6 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center z-10"
+            >
+              Login
+            </button>
+          </div>
         </div>
       </header>
 
@@ -226,8 +234,8 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
-            Create stunning visual experiences with our advanced shader technology. Interactive lighting, smooth
-            animations, and beautiful effects that respond to your every move.
+            Millions of students don't have university email addresses. StudentProof replaces email-based verification with reusable on-chain Proof of Student.
+            Verify once using your student ID and securely prove your student status anywhere.
           </motion.p>
 
           <motion.div
