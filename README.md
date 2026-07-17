@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# StudentProof 🎓 
 
-First, run the development server:
+### Reusable On-Chain Proof of Student
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Verify once with your Student ID. Prove your student status anywhere.
+
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![Auth.js](https://img.shields.io/badge/Auth.js-v5-green)
+![TypeScript](https://img.shields.io/badge/TypeScript-blue)
+![Status](https://img.shields.io/badge/status-Development-orange)
+
+</div>
+
+---
+
+##  Overview
+
+Millions of students worldwide cannot access student discounts, educational tools, or university services simply because their institution doesn't provide a verified `.edu` email address.
+
+**StudentProof** replaces email-based verification with a reusable **Proof of Student**.
+
+Students verify themselves once using their student ID card. After verification, they receive a reusable on-chain proof that can be used across any platform integrating StudentProof.
+
+No repeated uploads.
+
+No manual verification every time.
+
+One verification. Unlimited reuse.
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+
+## Authentication
+
+- Auth.js v5
+- Google OAuth
+
+## Backend
+
+- Next.js Route Handlers
+- PostgreSQL
+- Prisma ORM
+
+## OCR
+
+- OpenCV
+- EasyOCR
+
+## Blockchain
+
+- Stellar
+- Soroban Smart Contracts
+
+---
+
+# 📖 How it Works
+
+```text
+Google Login
+      │
+      ▼
+Upload Student ID
+      │
+      ▼
+OCR extracts student details
+      │
+      ▼
+Validate against institution database
+      │
+      ▼
+Create StudentProof Wallet
+      │
+      ▼
+Issue reusable Proof of Student
+      │
+      ▼
+Use anywhere through SDK/API
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Why StudentProof?
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Current student verification usually depends on university email addresses.
 
-## Learn More
+This creates problems because:
 
-To learn more about Next.js, take a look at the following resources:
+- Many institutions don't provide `.edu` emails.
+- Students repeatedly upload ID cards.
+- Every website builds its own verification flow.
+- Personal information is exposed unnecessarily.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+StudentProof provides a reusable verification layer that applications can integrate once.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+# 📂 Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+ ├── api/
+ ├── dashboard/
+ ├── docs/
+ ├── sdk/
+ ├── layout.tsx
+ └── page.tsx
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+components/
+ ├── hero/
+ └── ui/
+
+lib/
+
+auth.ts
+
+middleware.ts
+```
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+<div align="center">
+
+Made with ❤️ for students worldwide.
+
+</div>
