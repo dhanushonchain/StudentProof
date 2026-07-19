@@ -1,5 +1,5 @@
-import Hero from "@/components/hero/Hero";
+import PrismaHero from "@/components/hero/Hero";
 
-export default function Home() {
-  return <Hero />;
+export default function DemoOne() {
+  return <PrismaHero />;
 }
