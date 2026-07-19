@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+
 
 const CREAM = "#E1E0CC";
 const BG = "#050608";
 
-export default function DocsPage() {
+const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: () => void }) => {
   const [activeSection, setActiveSection] = useState("what");
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
 
@@ -74,23 +77,35 @@ export default function DocsPage() {
   };
 
   return (
-    <main
-      className="flex min-h-screen"
+    <div
+      className={`relative flex ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
       style={{ background: BG, color: CREAM }}
     >
+      {modal && onClose && (
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
+          aria-label="Close documentation"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+
       {/* ===================== Sidebar ===================== */}
       <aside
-        className="sticky top-0 h-screen w-64 shrink-0 flex flex-col px-8 py-10 overflow-y-auto"
+        className={`${modal ? "h-full" : "sticky top-0 h-screen"} w-64 shrink-0 flex flex-col px-8 py-10 overflow-y-auto`}
         style={{ borderRight: `1px solid ${CREAM}12` }}
       >
         {/* Logo */}
         <Link href="/" className="inline-block mb-12 group">
-          <span
-            className="font-medium tracking-[-0.07em] text-3xl leading-none transition-opacity group-hover:opacity-70"
-            style={{ color: CREAM }}
-          >
-            StudentProof
-          </span>
+          <Image
+            src="/StudentProof.svg"
+            alt="StudentProof"
+            width={311}
+            height={65}
+            priority
+            className="h-auto w-40 transition-opacity group-hover:opacity-70"
+          />
         </Link>
 
         <p style={{ ...label }}>Documentation</p>
@@ -118,7 +133,7 @@ export default function DocsPage() {
       </aside>
 
       {/* ===================== Content ===================== */}
-      <section className="flex-1 max-w-4xl mx-auto px-12 py-14 overflow-y-auto">
+      <section className={`flex-1 max-w-4xl mx-auto px-12 py-14 overflow-y-auto ${modal ? "h-full pr-16" : ""}`}>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -177,7 +192,7 @@ export default function DocsPage() {
                       StudentProof separates student verification from verification reuse.
                       Educational institutions verify students only once. After credential issuance,
                       organizations can independently verify student status without needing access
-                      to the student's personal documents or relying on StudentProof as a trusted
+                      to the student&apos;s personal documents or relying on StudentProof as a trusted
                       intermediary.
                     </p>
                   </div>
@@ -433,8 +448,8 @@ export default function DocsPage() {
                 >
                   <h2 style={{ ...h2Style, marginBottom: "0.75rem" }}>Still have questions?</h2>
                   <p className="mb-8 mx-auto max-w-md" style={body}>
-                    StudentProof is under active development. If you'd like to contribute, collaborate,
-                    or learn more, we'd love to hear from you.
+                    StudentProof is under active development. If you&apos;d like to contribute, collaborate,
+                    or learn more, we&apos;d love to hear from you.
                   </p>
                   <button
                     className="px-8 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-70"
@@ -449,6 +464,50 @@ export default function DocsPage() {
           </motion.div>
         </AnimatePresence>
       </section>
+    </div>
+  );
+};
+
+export const DocsModal = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="docs-modal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="fixed inset-0 z-50 flex items-center justify-center px-6 pb-4 pt-12"
+        style={{ backdropFilter: "blur(1px)" }}
+        onClick={onClose}
+      >
+        <motion.div
+          key="docs-modal-card"
+          initial={{ opacity: 0, scale: 0.92, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: 24 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-black"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DocsContent modal onClose={onClose} />
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+export default function DocsPage() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="relative h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-black"
+      >
+        <DocsContent modal onClose={() => { window.location.href = "/"; }} />
+      </motion.div>
     </main>
   );
 }

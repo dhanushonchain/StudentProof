@@ -3,7 +3,9 @@
 import { motion, useInView } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { DocsModal } from "@/app/docs/page";
 import { LoginModal } from "@/app/login/page";
 
 /* ---------------- WordsPullUp ---------------- */
@@ -94,10 +96,12 @@ const navItems = [
 
 const PrismaHero = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [showDocs, setShowDocs] = useState(false);
 
   return (
     <>
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      {showDocs && <DocsModal onClose={() => setShowDocs(false)} />}
 
       <section className="h-screen w-full">
         <div className="relative h-full w-full overflow-hidden">
@@ -123,14 +127,25 @@ const PrismaHero = () => {
           <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
             <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
               {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="text-[10px] transition-colors sm:text-xs md:text-sm"
-                  style={{ color: "rgba(225, 224, 204, 0.8)" }}
-                >
-                  {item.label}
-                </Link>
+                item.label === "DOCS" ? (
+                  <button
+                    key={item.label}
+                    onClick={() => setShowDocs(true)}
+                    className="text-[10px] transition-colors sm:text-xs md:text-sm"
+                    style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="text-[10px] transition-colors sm:text-xs md:text-sm"
+                    style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                  >
+                    {item.label}
+                  </Link>
+                )
               ))}
             </div>
           </nav>
@@ -141,24 +156,27 @@ const PrismaHero = () => {
               
               <div className="col-span-12 lg:col-span-8">
                 <h1
-                  className="
-                  font-medium
-                  leading-[0.82]
-                  tracking-[-0.07em]
-                  text-[18vw]
-                  sm:text-[16vw]
-                  md:text-[14vw]
-                  lg:text-[12vw]
-                  xl:text-[11vw]
-                  2xl:text-[10vw]
-                  "
-                  style={{ color: "#E1E0CC" }}
+                  className="leading-none"
                 >
-                  <WordsPullUp text="StudentProof"/>
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-[88vw] max-w-[920px] sm:w-[78vw] lg:w-[50vw]"
+                  >
+                    <Image
+                      src="/StudentProof.svg"
+                      alt="StudentProof"
+                      width={311}
+                      height={65}
+                      priority
+                      className="h-auto w-full"
+                    />
+                  </motion.div>
                 </h1>
               </div>
 
-              <div className="col-span-12 flex flex-col gap-5 pb-2 lg:col-span-4 lg:pb-4">
+              <div className="col-span-12 flex flex-col gap-5 pb-2 lg:col-span-4 lg:-translate-x-12 lg:pb-4 xl:-translate-x-20">
                 
                 <motion.p
                   initial={{ y: 20, opacity: 0 }}

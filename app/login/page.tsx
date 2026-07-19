@@ -2,9 +2,9 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import LoginButton from "@/app/api/auth/LoginButton";
-import { WordsPullUp } from "@/components/hero/Hero";
 
 /* ---------------- LoginModal ---------------- */
 export const LoginModal = ({ onClose }: { onClose: () => void }) => {
@@ -39,12 +39,14 @@ export const LoginModal = ({ onClose }: { onClose: () => void }) => {
 
           {/* Logo */}
           <div className="flex justify-center">
-            <span
-              className="font-medium tracking-[-0.07em] text-[2.8rem] leading-none"
-              style={{ color: "#E1E0CC" }}
-            >
-              <WordsPullUp text="StudentProof" />
-            </span>
+            <Image
+              src="/StudentProof.svg"
+              alt="StudentProof"
+              width={300}
+              height={65}
+              priority
+              className="h-auto w-64"
+            />
           </div>
 
           {/* Heading */}
