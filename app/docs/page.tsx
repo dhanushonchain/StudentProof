@@ -5,10 +5,129 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { TopAccessNav, type AccessPath } from "@/components/nav-bar/nav-bar";
 
 
 const CREAM = "#E1E0CC";
 const BG = "#050608";
+const docsPlaceholders = {
+  "/sdk": {
+    label: "SDK",
+    heading: "SDK documentation placeholder",
+    body: "Full SDK guides, installation, and examples will be added here.",
+    sidebarItem: "SDK Placeholder",
+  },
+  "/api": {
+    label: "API",
+    heading: "API documentation placeholder",
+    body: "Endpoint references and authentication guides will be added here.",
+    sidebarItem: "API Placeholder",
+  },
+} as const;
+
+const PlaceholderDocsContent = ({
+  page,
+  modal = false,
+  onClose,
+}: {
+  page: "/sdk" | "/api";
+  modal?: boolean;
+  onClose?: () => void;
+}) => {
+  const content = docsPlaceholders[page];
+  const label = content.label;
+  const title = content.heading;
+  const body = content.body;
+
+  return (
+    <div
+      className={`relative flex ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
+      style={{ background: BG, color: CREAM }}
+    >
+      {modal && onClose && (
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
+          aria-label={`Close ${label} documentation`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+
+      <aside
+        className={`${modal ? "h-full" : "sticky top-0 h-screen"} flex w-64 shrink-0 flex-col overflow-y-auto px-8 py-10`}
+        style={{ borderRight: `1px solid ${CREAM}12` }}
+      >
+        <Link href="/" className="mb-12 inline-block group">
+          <Image
+            src="/StudentProof.svg"
+            alt="StudentProof"
+            width={311}
+            height={65}
+            priority
+            className="h-auto w-40 transition-opacity group-hover:opacity-70"
+          />
+        </Link>
+
+        <p
+          style={{
+            fontSize: "0.7rem",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            color: `${CREAM}60`,
+            marginBottom: "1.5rem",
+          }}
+        >
+          {label}
+        </p>
+
+        <div
+          className="rounded-lg px-3 py-2.5 text-sm"
+          style={{
+            color: CREAM,
+            background: `${CREAM}10`,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {content.sidebarItem}
+        </div>
+
+        <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
+          StudentProof © 2025
+        </div>
+      </aside>
+
+      <section className={`mx-auto flex max-w-4xl flex-1 items-center px-12 py-14 overflow-y-auto ${modal ? "h-full pr-16" : ""}`}>
+        <div className="w-full rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+          <p
+            style={{
+              fontSize: "0.7rem",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: `${CREAM}60`,
+              marginBottom: "1.5rem",
+            }}
+          >
+            {label}
+          </p>
+          <h1
+            style={{
+              fontWeight: 600,
+              fontSize: "clamp(2.8rem, 5vw, 5rem)",
+              lineHeight: 0.9,
+              letterSpacing: "-0.05em",
+              color: CREAM,
+              marginBottom: "2rem",
+            }}
+          >
+            {title}
+          </h1>
+          <p style={{ fontSize: "1rem", lineHeight: 1.6, color: `${CREAM}85` }}>{body}</p>
+        </div>
+      </section>
+    </div>
+  );
+};
 
 const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: () => void }) => {
   const [activeSection, setActiveSection] = useState("what");
@@ -468,7 +587,15 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
   );
 };
 
-export const DocsModal = ({ onClose }: { onClose: () => void }) => {
+export const DocsModal = ({
+  onClose,
+  initialPath = "/docs",
+}: {
+  onClose: () => void;
+  initialPath?: AccessPath;
+}) => {
+  const [activePath, setActivePath] = useState<AccessPath>(initialPath);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -481,6 +608,7 @@ export const DocsModal = ({ onClose }: { onClose: () => void }) => {
         style={{ backdropFilter: "blur(1px)" }}
         onClick={onClose}
       >
+        <TopAccessNav currentPath={activePath} onSelect={setActivePath} className="z-[60]" />
         <motion.div
           key="docs-modal-card"
           initial={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -490,7 +618,11 @@ export const DocsModal = ({ onClose }: { onClose: () => void }) => {
           className="relative z-10 h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-black"
           onClick={(e) => e.stopPropagation()}
         >
-          <DocsContent modal onClose={onClose} />
+          {activePath === "/docs" ? (
+            <DocsContent modal onClose={onClose} />
+          ) : (
+            <PlaceholderDocsContent page={activePath} modal onClose={onClose} />
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -500,6 +632,7 @@ export const DocsModal = ({ onClose }: { onClose: () => void }) => {
 export default function DocsPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
+      <TopAccessNav currentPath="/docs" />
       <motion.div
         initial={{ opacity: 0, scale: 0.92, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

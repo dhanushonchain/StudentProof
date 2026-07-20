@@ -97,11 +97,12 @@ const navItems = [
 const PrismaHero = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
+  const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/api">("/docs");
 
   return (
     <>
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
-      {showDocs && <DocsModal onClose={() => setShowDocs(false)} />}
+      {showDocs && <DocsModal initialPath={docsInitialPath} onClose={() => setShowDocs(false)} />}
 
       <section className="h-screen w-full">
         <div className="relative h-full w-full overflow-hidden">
@@ -124,31 +125,43 @@ const PrismaHero = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
           {/* Navbar */}
-          <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
-            <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
-              {navItems.map((item) => (
-                item.label === "DOCS" ? (
-                  <button
-                    key={item.label}
-                    onClick={() => setShowDocs(true)}
-                    className="text-[10px] transition-colors sm:text-xs md:text-sm"
-                    style={{ color: "rgba(225, 224, 204, 0.8)" }}
-                  >
-                    {item.label}
-                  </button>
-                ) : (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="text-[10px] transition-colors sm:text-xs md:text-sm"
-                    style={{ color: "rgba(225, 224, 204, 0.8)" }}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              ))}
-            </div>
-          </nav>
+          {!showDocs ? (
+            <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
+              <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
+                {navItems.map((item) => {
+                  const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/api";
+
+                  if (isDocsSurface) {
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => {
+                          setDocsInitialPath(item.href as "/docs" | "/sdk" | "/api");
+                          setShowDocs(true);
+                        }}
+                        className="text-[10px] transition-colors sm:text-xs md:text-sm"
+                        style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="text-[10px] transition-colors sm:text-xs md:text-sm"
+                      style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          ) : null}
 
           {/* Hero content */}
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-10 sm:px-6 md:px-10">
