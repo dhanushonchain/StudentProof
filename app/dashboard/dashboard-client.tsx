@@ -26,6 +26,7 @@ export type DashboardUser = {
   name: string;
   email: string;
   image: string | null;
+  walletPublicKey: string | null;
 };
 
 const navItems = [
@@ -62,6 +63,7 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
 
           <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
             <WelcomeSection firstName={firstName} lastName={lastName} />
+            {user.walletPublicKey && <WalletInfoSection walletPublicKey={user.walletPublicKey} />}
             <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)] lg:items-start">
               <div>{hasVerified ? <CredentialCard /> : <EmptyState onVerify={() => setHasVerified(true)} />}</div>
               <div className="lg:sticky lg:top-6">
@@ -311,6 +313,38 @@ function ProgressState({ hasVerified }: { hasVerified: boolean }) {
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
+  return (
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 sm:p-8">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <Wallet className="h-5 w-5 text-[#E1E0CC]" aria-hidden="true" />
+          <h3 className="text-lg font-semibold text-white">Your Stellar Wallet</h3>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm text-zinc-400">Public Key</p>
+          <div className="flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#09090B] p-3">
+            <code className="flex-1 break-all font-mono text-sm text-[#E1E0CC]">{walletPublicKey}</code>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(walletPublicKey);
+              }}
+              className="shrink-0 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-zinc-300 hover:bg-[#17171A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
+              title="Copy to clipboard"
+            >
+              Copy
+            </button>
+          </div>
+          <p className="text-xs text-zinc-500">
+            This wallet was automatically created and will be used for your student credentials on Stellar.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

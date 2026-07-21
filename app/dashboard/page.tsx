@@ -13,6 +13,7 @@ export default async function Dashboard() {
     name: session.user?.name ?? "Dhanush Yangola",
     email: session.user?.email ?? "yangoladhanush@gmail.com",
     image: session.user?.image ?? null,
+    walletPublicKey: (session.user as any)?.walletPublicKey ?? null,
   };
 
   return <DashboardClient user={user} />;
