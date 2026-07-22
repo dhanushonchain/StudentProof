@@ -41,7 +41,7 @@ const PlaceholderDocsContent = ({
 
   return (
     <div
-      className={`relative flex ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
+      className={`relative flex flex-col md:flex-row ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
       style={{ background: BG, color: CREAM }}
     >
       {modal && onClose && (
@@ -55,10 +55,10 @@ const PlaceholderDocsContent = ({
       )}
 
       <aside
-        className={`${modal ? "h-full" : "sticky top-0 h-screen"} flex w-64 shrink-0 flex-col overflow-y-auto px-8 py-10`}
-        style={{ borderRight: `1px solid ${CREAM}12` }}
+        className={`flex w-full shrink-0 flex-col overflow-y-auto border-b px-6 py-6 sm:px-8 sm:py-8 md:w-64 md:border-b-0 md:border-r md:py-10 ${modal ? "md:h-full" : "md:sticky md:top-0 md:h-screen"}`}
+        style={{ borderColor: `${CREAM}12` }}
       >
-        <Link href="/" className="mb-12 inline-block group">
+        <Link href="/" className="mb-8 inline-block group md:mb-12">
           <Image
             src="/StudentProof.svg"
             alt="StudentProof"
@@ -92,13 +92,13 @@ const PlaceholderDocsContent = ({
           {content.sidebarItem}
         </div>
 
-        <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
+        <div className="pt-10 text-xs md:mt-auto" style={{ color: `${CREAM}30` }}>
           StudentProof © 2025
         </div>
       </aside>
 
-      <section className={`mx-auto flex max-w-4xl flex-1 items-center px-12 py-14 overflow-y-auto ${modal ? "h-full pr-16" : ""}`}>
-        <div className="w-full rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <section className={`mx-auto flex flex-1 items-center overflow-y-auto px-4 py-8 sm:px-6 md:max-w-4xl md:px-12 md:py-14 ${modal ? "h-full md:pr-16" : ""}`}>
+        <div className="w-full rounded-2xl p-5 sm:p-6 md:p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
           <p
             style={{
               fontSize: "0.7rem",
@@ -189,7 +189,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
   };
 
   /* ---- card ---- */
-  const card = "rounded-2xl p-7";
+  const card = "rounded-2xl p-4 sm:p-5 md:p-7";
   const cardStyle = {
     border: `1px solid ${CREAM}15`,
     background: `${CREAM}05`,
@@ -197,7 +197,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
 
   return (
     <div
-      className={`relative flex ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
+      className={`relative flex flex-col md:flex-row ${modal ? "h-full overflow-hidden rounded-3xl" : "min-h-screen"}`}
       style={{ background: BG, color: CREAM }}
     >
       {modal && onClose && (
@@ -212,11 +212,11 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
 
       {/* ===================== Sidebar ===================== */}
       <aside
-        className={`${modal ? "h-full" : "sticky top-0 h-screen"} w-64 shrink-0 flex flex-col px-8 py-10 overflow-y-auto`}
-        style={{ borderRight: `1px solid ${CREAM}12` }}
+        className={`w-full shrink-0 flex flex-col px-6 py-6 sm:px-8 sm:py-8 md:w-64 md:py-10 overflow-y-auto border-b md:border-b-0 md:border-r ${modal ? "md:h-full" : "md:sticky md:top-0 md:h-screen"}`}
+        style={{ borderColor: `${CREAM}12` }}
       >
         {/* Logo */}
-        <Link href="/" className="inline-block mb-12 group">
+        <Link href="/" className="inline-block mb-8 md:mb-12 group">
           <Image
             src="/StudentProof.svg"
             alt="StudentProof"
@@ -229,12 +229,12 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
 
         <p style={{ ...label }}>Documentation</p>
 
-        <nav className="space-y-1">
+        <nav className="flex gap-1 overflow-x-auto no-scrollbar md:block md:space-y-1 md:overflow-visible">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200"
+              className="shrink-0 whitespace-nowrap text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 md:w-full md:whitespace-normal"
               style={{
                 color: activeSection === item.id ? CREAM : `${CREAM}55`,
                 background: activeSection === item.id ? `${CREAM}10` : "transparent",
@@ -246,13 +246,13 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
           ))}
         </nav>
 
-        <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
+        <div className="pt-10 text-xs md:mt-auto" style={{ color: `${CREAM}30` }}>
           StudentProof © 2025
         </div>
       </aside>
 
       {/* ===================== Content ===================== */}
-      <section className={`flex-1 max-w-4xl mx-auto px-12 py-14 overflow-y-auto ${modal ? "h-full pr-16" : ""}`}>
+      <section className={`flex-1 mx-auto px-4 py-8 sm:px-6 md:max-w-4xl md:px-12 md:py-14 overflow-y-auto ${modal ? "h-full md:pr-16" : ""}`}>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -562,7 +562,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
 
                 {/* CTA */}
                 <div
-                  className="rounded-2xl p-10 text-center"
+                  className="rounded-2xl p-6 text-center sm:p-8 md:p-10"
                   style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}06` }}
                 >
                   <h2 style={{ ...h2Style, marginBottom: "0.75rem" }}>Still have questions?</h2>

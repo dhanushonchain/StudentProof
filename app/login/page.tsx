@@ -16,7 +16,7 @@ export const LoginModal = ({ onClose }: { onClose: () => void }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-50 flex items-center justify-center px-6"
+        className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
         style={{ backdropFilter: "blur(1px)" }}
         onClick={onClose}
       >
@@ -26,7 +26,7 @@ export const LoginModal = ({ onClose }: { onClose: () => void }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 24 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 w-full max-w-lg rounded-3xl bg-black p-10"
+          className="relative z-10 w-full max-w-lg rounded-3xl bg-black p-6 sm:p-8 md:p-10"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
@@ -45,13 +45,13 @@ export const LoginModal = ({ onClose }: { onClose: () => void }) => {
               width={300}
               height={65}
               priority
-              className="h-auto w-64"
+              className="h-auto w-48 sm:w-64"
             />
           </div>
 
           {/* Heading */}
-          <div className="mt-10 text-center">
-            <h2 className="text-4xl font-bold" style={{ color: "#E1E0CC", lineHeight: 1.2 }}>
+          <div className="mt-8 text-center sm:mt-10">
+            <h2 className="text-3xl font-bold sm:text-4xl" style={{ color: "#E1E0CC", lineHeight: 1.2 }}>
               Verify your Student Identity
             </h2>
             <p className="mt-4 text-sm" style={{ color: "#E1E0CC", lineHeight: 1.2 }}>
@@ -61,12 +61,12 @@ export const LoginModal = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           {/* Google Button */}
-          <div className="mt-10">
+          <div className="mt-8 sm:mt-10">
             <LoginButton />
           </div>
 
           {/* Footer */}
-          <p className="mt-10 text-center text-sm" style={{ color: "#E1E0CC", lineHeight: 1.2 }}>
+          <p className="mt-8 text-center text-sm sm:mt-10" style={{ color: "#E1E0CC", lineHeight: 1.2 }}>
             By continuing you agree to our{" "}
             <Link href="/terms" style={{ color: "#E1E0CC" }} className="underline hover:opacity-70">
               Terms

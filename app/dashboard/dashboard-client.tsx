@@ -133,7 +133,7 @@ function WalletSection({ user, onClose }: { user: DashboardUser; onClose: () => 
         {user.walletPublicKey ? (
           <WalletInfoSection walletPublicKey={user.walletPublicKey} />
         ) : (
-          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10">
+          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 sm:p-8 md:p-10">
             <p className="text-zinc-400">No wallet has been created for your account yet.</p>
           </section>
         )}
@@ -191,7 +191,7 @@ function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Activity</h1>
 
         {events.length === 0 ? (
-          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
+          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
             <Activity className="mx-auto h-8 w-8 text-[#E1E0CC]" aria-hidden="true" />
             <p className="mt-4 text-zinc-400">No activity yet. Your verification and credential events will show up here.</p>
           </section>
@@ -297,8 +297,10 @@ function ActionButton({
 
 function EmptyState({ onVerify }: { onVerify: () => void }) {
   return (
-    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
-      <h3 className="whitespace-nowrap text-4xl font-semibold tracking-tight text-white">Verify Your Student Identity</h3>
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+      <h3 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:whitespace-nowrap md:text-4xl">
+        Verify Your Student Identity
+      </h3>
       <p className="mx-auto mt-5 max-w-lg leading-7 text-zinc-400">
         Verify once using Reclaim Protocol and securely reuse your credential across supported applications.
       </p>
@@ -322,8 +324,8 @@ function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
         </div>
         <div className="space-y-2">
           <p className="text-sm text-zinc-400">Public Key</p>
-          <div className="flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#09090B] p-3">
-            <code className="flex-1 break-all font-mono text-sm text-[#E1E0CC]">{walletPublicKey}</code>
+          <div className="flex flex-col items-start gap-2 rounded-lg border border-[#27272A] bg-[#09090B] p-3 sm:flex-row sm:items-center">
+            <code className="min-w-0 flex-1 break-all font-mono text-sm text-[#E1E0CC]">{walletPublicKey}</code>
             <button
               type="button"
               onClick={() => {

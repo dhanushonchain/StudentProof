@@ -22,13 +22,13 @@ export function DashNavigation({
 }) {
   return (
     <nav
-      className={`fixed left-1/2 top-0 z-50 -translate-x-1/2 ${className}`}
+      className={`fixed left-1/2 top-0 z-50 max-w-[calc(100vw-5.5rem)] -translate-x-1/2 sm:max-w-[calc(100vw-2rem)] ${className}`}
       onClick={(event) => event.stopPropagation()}
     >
-      <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
+      <div className="no-scrollbar flex h-10 items-center gap-3 overflow-x-auto rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
         {navItems.map((item) => {
           const isActive = item.section === currentSection;
-          const commonClass = "text-[10px] transition-colors sm:text-xs md:text-sm";
+          const commonClass = "shrink-0 text-[10px] transition-colors sm:text-xs md:text-sm";
           const commonStyle = { color: isActive ? "#E1E0CC" : "rgba(225, 224, 204, 0.8)" };
 
           if (item.href) {
