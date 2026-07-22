@@ -6,6 +6,7 @@ export type DashSection = "home" | "wallet" | "activity";
 
 const navItems: { label: string; section: DashSection | null; href?: string }[] = [
   { label: "Home", section: null, href: "/" },
+  { label: "Dashboard", section: "home" },
   { label: "Wallet", section: "wallet" },
   { label: "Activity", section: "activity" },
 ];

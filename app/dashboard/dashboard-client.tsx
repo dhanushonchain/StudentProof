@@ -1,36 +1,25 @@
 "use client";
 
 import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-bar";
+import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
+import { type ActivityLogEntry, getActivityLog, recordLoginIfNew } from "@/lib/activity-log";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Activity,
-  Bell,
-  Check,
-  ChevronDown,
-  ExternalLink,
-  type LucideIcon,
-  LogOut,
-  QrCode,
-  Settings,
-  ShieldCheck,
-  Wallet,
-  X,
-} from "lucide-react";
-import { signOut } from "next-auth/react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Activity, Check, ExternalLink, type LucideIcon, LogIn, LogOut, QrCode, ShieldCheck, Wallet } from "lucide-react";
+import { type ReactNode, useState } from "react";
 
 export type DashboardUser = {
   name: string;
   email: string;
   image: string | null;
   walletPublicKey: string | null;
+  loginAt: string | null;
 };
 
 export default function DashboardClient({ user }: { user: DashboardUser }) {
   const [activeSection, setActiveSection] = useState<DashSection | null>("home");
-  const [hasVerified, setHasVerified] = useState(false);
+  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#09090B] text-white antialiased">
@@ -40,8 +29,8 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
           onSelect={setActiveSection}
           onClose={() => setActiveSection(null)}
           user={user}
-          hasVerified={hasVerified}
-          setHasVerified={setHasVerified}
+          verifiedAt={verifiedAt}
+          setVerifiedAt={setVerifiedAt}
         />
       )}
 
@@ -53,7 +42,7 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
       {!activeSection && <DashNavigation onSelect={setActiveSection} />}
-      <ProfileMenu user={user} />
+      <ProfileMenu user={{ name: user.name, image: user.image, email: user.email }} />
     </main>
   );
 }
@@ -63,15 +52,15 @@ function DashboardModal({
   onSelect,
   onClose,
   user,
-  hasVerified,
-  setHasVerified,
+  verifiedAt,
+  setVerifiedAt,
 }: {
   activeSection: DashSection;
   onSelect: (section: DashSection) => void;
   onClose: () => void;
   user: DashboardUser;
-  hasVerified: boolean;
-  setHasVerified: (value: boolean) => void;
+  verifiedAt: string | null;
+  setVerifiedAt: (value: string | null) => void;
 }) {
   return (
     <AnimatePresence>
@@ -83,7 +72,7 @@ function DashboardModal({
         transition={{ duration: 0.25 }}
         className="fixed inset-0 z-50 flex items-center justify-center px-6 pb-4 pt-12"
         style={{ backdropFilter: "blur(1px)" }}
-        onClick={onClose}
+        onClick={activeSection === "home" ? undefined : onClose}
       >
         <DashNavigation currentSection={activeSection} onSelect={onSelect} className="z-[60]" />
         <motion.div
@@ -95,48 +84,30 @@ function DashboardModal({
           className="relative z-10 h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-[#09090B]"
           onClick={(e) => e.stopPropagation()}
         >
-          {activeSection === "home" && (
-            <HomeSection user={user} hasVerified={hasVerified} setHasVerified={setHasVerified} onClose={onClose} />
-          )}
+          {activeSection === "home" && <HomeSection user={user} verifiedAt={verifiedAt} setVerifiedAt={setVerifiedAt} />}
           {activeSection === "wallet" && <WalletSection user={user} onClose={onClose} />}
-          {activeSection === "activity" && <ActivitySection onClose={onClose} />}
+          {activeSection === "activity" && <ActivitySection user={user} verifiedAt={verifiedAt} />}
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
 }
 
-function CloseButton({ onClose, label }: { onClose: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label={label}
-      className="absolute right-5 top-5 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
-    >
-      <X className="h-4 w-4" />
-    </button>
-  );
-}
 
 function HomeSection({
   user,
-  hasVerified,
-  setHasVerified,
-  onClose,
+  verifiedAt,
+  setVerifiedAt,
 }: {
   user: DashboardUser;
-  hasVerified: boolean;
-  setHasVerified: (value: boolean) => void;
-  onClose: () => void;
+  verifiedAt: string | null;
+  setVerifiedAt: (value: string | null) => void;
 }) {
   const firstName = user.name.split(" ")[0] || "Dhanush";
   const lastName = user.name.split(" ")[1] || "Doe";
 
   return (
     <div className="relative flex h-full flex-col">
-      <CloseButton onClose={onClose} label="Close dashboard" />
-
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 pt-10 sm:px-6 lg:px-8">
         <section className="flex flex-col gap-2 pt-0 sm:pt-1">
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -144,12 +115,9 @@ function HomeSection({
           </h1>
         </section>
 
-        {user.walletPublicKey && <WalletInfoSection walletPublicKey={user.walletPublicKey} />}
-
-        <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)] lg:items-start">
-          <div>{hasVerified ? <CredentialCard /> : <EmptyState onVerify={() => setHasVerified(true)} />}</div>
-          <div className="lg:sticky lg:top-6">
-            <ProgressState hasVerified={hasVerified} />
+        <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
+          <div className="w-full">
+            {verifiedAt ? <CredentialCard /> : <EmptyState onVerify={() => setVerifiedAt(new Date().toISOString())} />}
           </div>
         </div>
       </div>
@@ -160,7 +128,6 @@ function HomeSection({
 function WalletSection({ user, onClose }: { user: DashboardUser; onClose: () => void }) {
   return (
     <div className="relative flex h-full flex-col">
-      <CloseButton onClose={onClose} label="Close wallet" />
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Wallet</h1>
         {user.walletPublicKey ? (
@@ -175,90 +142,97 @@ function WalletSection({ user, onClose }: { user: DashboardUser; onClose: () => 
   );
 }
 
-function ActivitySection({ onClose }: { onClose: () => void }) {
+type ActivityEvent = {
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+  address?: string;
+  timestamp: Date;
+};
+
+function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt: string | null }) {
+  const [authEvents] = useState<ActivityLogEntry[]>(() => {
+    if (user.loginAt) recordLoginIfNew(user.email, user.loginAt);
+    return getActivityLog(user.email);
+  });
+
+  const events: ActivityEvent[] = authEvents.map((entry) => ({
+    icon: entry.type === "login" ? LogIn : LogOut,
+    title: entry.type === "login" ? "Signed in with Google" : "Signed out",
+    detail: user.email,
+    timestamp: new Date(entry.timestamp),
+  }));
+
+  if (user.walletPublicKey && user.loginAt) {
+    events.push({
+      icon: Wallet,
+      title: "Stellar wallet created",
+      detail: "Wallet automatically generated for your account",
+      address: user.walletPublicKey,
+      timestamp: new Date(user.loginAt),
+    });
+  }
+
+  if (verifiedAt) {
+    events.push({
+      icon: ShieldCheck,
+      title: "Student credential issued",
+      detail: "Verified with Reclaim Protocol",
+      address: user.walletPublicKey ?? undefined,
+      timestamp: new Date(verifiedAt),
+    });
+  }
+
+  events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
   return (
     <div className="relative flex h-full flex-col">
-      <CloseButton onClose={onClose} label="Close activity" />
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Activity</h1>
-        <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
-          <Activity className="mx-auto h-8 w-8 text-[#E1E0CC]" aria-hidden="true" />
-          <p className="mt-4 text-zinc-400">No activity yet. Your verification and credential events will show up here.</p>
-        </section>
-      </div>
-    </div>
-  );
-}
 
-function ProfileMenu({ user }: { user: DashboardUser }) {
-  const initial = user.name.charAt(0).toUpperCase();
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    }
-
-    window.addEventListener("mousedown", handleClickOutside);
-    return () => window.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div ref={menuRef} className="fixed right-0 top-0 z-[70] w-32">
-      <button
-        type="button"
-        className={cn(
-          "flex w-full items-center justify-center gap-2 bg-black px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]",
-          isProfileMenuOpen ? "rounded-bl-2xl" : "rounded-2xl rounded-tr-none"
-        )}
-        aria-haspopup="menu"
-        aria-expanded={isProfileMenuOpen}
-        onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-      >
-        {user.image ? (
-          <span
-            className="h-6 w-6 rounded-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${user.image})` }}
-            aria-label={`${user.name} profile photo`}
-          />
+        {events.length === 0 ? (
+          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
+            <Activity className="mx-auto h-8 w-8 text-[#E1E0CC]" aria-hidden="true" />
+            <p className="mt-4 text-zinc-400">No activity yet. Your verification and credential events will show up here.</p>
+          </section>
         ) : (
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E1E0CC] text-[10px] font-semibold text-[#09090B]">
-            {initial}
-          </span>
+          <ol className="flex flex-col gap-3">
+            {events.map((event, index) => (
+              <li key={index} className="rounded-[1.5rem] border border-[#27272A] bg-[#111113] p-5 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#27272A] bg-[#09090B]">
+                    <event.icon className="h-4 w-4 text-[#E1E0CC]" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                      <h3 className="text-sm font-semibold text-white sm:text-base">{event.title}</h3>
+                      <time className="shrink-0 text-xs text-zinc-500">
+                        {event.timestamp.toLocaleDateString("en-IN", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          timeZone: "Asia/Kolkata",
+                        })}{" "}
+                        ·{" "}
+                        {event.timestamp.toLocaleTimeString("en-IN", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          timeZone: "Asia/Kolkata",
+                        })}{" "}
+                        IST
+                      </time>
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-400">{event.detail}</p>
+                    {event.address && (
+                      <code className="mt-2 block truncate font-mono text-xs text-[#E1E0CC]">{event.address}</code>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
         )}
-        <ChevronDown
-          className="h-3.5 w-3.5 transition-transform"
-          style={{ color: "rgba(225, 224, 204, 0.8)", transform: isProfileMenuOpen ? "rotate(180deg)" : undefined }}
-          aria-hidden="true"
-        />
-      </button>
-
-      {isProfileMenuOpen ? (
-        <div role="menu" className="w-full overflow-hidden rounded-b-2xl bg-black p-1 shadow-xl">
-          <button
-            type="button"
-            role="menuitem"
-            className="flex h-8 w-full items-center gap-2 rounded-xl px-2 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
-            style={{ color: "rgba(225, 224, 204, 0.8)" }}
-          >
-            <Settings className="h-3.5 w-3.5" aria-hidden="true" />
-            Settings
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex h-8 w-full items-center gap-2 rounded-xl px-2 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
-            style={{ color: "rgba(225, 224, 204, 0.8)" }}
-          >
-            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-            Logout
-          </button>
-        </div>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -323,51 +297,17 @@ function ActionButton({
 
 function EmptyState({ onVerify }: { onVerify: () => void }) {
   return (
-    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10">
-      <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-        <div>
-          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#27272A] bg-[#09090B]">
-            <ShieldCheck className="h-8 w-8 text-[#E1E0CC]" />
-          </div>
-
-          <h2 className="text-4xl font-semibold tracking-tight text-white">Verify Your Student Identity</h2>
-          <p className="mt-5 max-w-lg leading-7 text-zinc-400">
-            Verify once using Reclaim Protocol and securely reuse your credential across supported applications.
-          </p>
-          <Button
-            onClick={onVerify}
-            className="mt-8 h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb]"
-          >
-            Verify Student
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProgressState({ hasVerified }: { hasVerified: boolean }) {
-  const steps = [
-    { label: "Connect Google", done: true },
-    { label: "Verify with Reclaim", done: hasVerified },
-    { label: "Student Credential Issued", done: hasVerified },
-    { label: "Reuse Everywhere", done: false },
-  ] as const;
-
-  return (
-    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 sm:p-8">
-      <ol className="space-y-3">
-        {steps.map((step, index) => (
-          <li
-            key={step.label}
-            className={cn("flex items-center gap-3 text-sm sm:text-base", step.done ? "text-[#E1E0CC]" : "text-zinc-400")}
-          >
-            <span className="font-medium">{index + 1}.</span>
-            <span>{step.label}</span>
-            {step.done ? <Check className="h-4 w-4" aria-hidden="true" /> : null}
-          </li>
-        ))}
-      </ol>
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
+      <h3 className="whitespace-nowrap text-4xl font-semibold tracking-tight text-white">Verify Your Student Identity</h3>
+      <p className="mx-auto mt-5 max-w-lg leading-7 text-zinc-400">
+        Verify once using Reclaim Protocol and securely reuse your credential across supported applications.
+      </p>
+      <Button
+        onClick={onVerify}
+        className="mt-8 h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb]"
+      >
+        Verify Student
+      </Button>
     </section>
   );
 }

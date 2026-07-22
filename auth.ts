@@ -10,6 +10,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account && profile && profile.sub) {
         const googleSub = profile.sub;
 
+        // account is only present on a fresh sign-in, so this timestamp stays fixed
+        // for the lifetime of the session instead of drifting on every token refresh
+        token.loginAt = new Date().toISOString();
+
         // If walletPublicKey is not in the token, this is the first login (or wallet was never created)
         if (!token.walletPublicKey) {
           // Lazy-import server-only wallet handler
@@ -28,6 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.walletPublicKey = token.walletPublicKey as string;
+        session.user.loginAt = token.loginAt as string;
       }
       return session;
     },

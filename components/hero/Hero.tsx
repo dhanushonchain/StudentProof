@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { DocsModal } from "@/app/docs/page";
 import { LoginModal } from "@/app/login/page";
+import { ProfileMenu, type ProfileMenuUser } from "@/components/profile-menu/profile-menu";
 
 /* ---------------- WordsPullUp ---------------- */
 interface WordsPullUpProps {
@@ -94,7 +95,7 @@ const navItems = [
   { label: "GitHub", href: "https://github.com/dhanush-devx/StudentProof.git" },
 ];
 
-const PrismaHero = () => {
+const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/api">("/docs");
@@ -103,6 +104,7 @@ const PrismaHero = () => {
     <>
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
       {showDocs && <DocsModal initialPath={docsInitialPath} onClose={() => setShowDocs(false)} />}
+      {user && <ProfileMenu user={user} />}
 
       <section className="h-screen w-full">
         <div className="relative h-full w-full overflow-hidden">
