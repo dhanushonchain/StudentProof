@@ -1,24 +1,23 @@
 "use client";
 
+import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-bar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
   Bell,
   Check,
   ChevronDown,
   ExternalLink,
-  Fingerprint,
-  Home,
   type LucideIcon,
   LogOut,
   QrCode,
   Settings,
   ShieldCheck,
   Wallet,
+  X,
 } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
@@ -29,93 +28,169 @@ export type DashboardUser = {
   walletPublicKey: string | null;
 };
 
-const navItems = [
-  { label: "Dashboard", icon: Home, active: true },
-  { label: "Activity", icon: Activity },
-  { label: "Wallet", icon: Wallet },
-  { label: "Settings", icon: Settings },
-];
-
 export default function DashboardClient({ user }: { user: DashboardUser }) {
-  const firstName = user.name.split(" ")[0] || "Dhanush";
-  const lastName = user.name.split(" ")[1] || "Doe";
+  const [activeSection, setActiveSection] = useState<DashSection | null>("home");
   const [hasVerified, setHasVerified] = useState(false);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#09090B] px-4 pb-6 pt-14 text-white antialiased sm:px-6 lg:px-8">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 h-full w-full object-cover"
-      >
+    <main className="relative min-h-screen overflow-hidden bg-[#09090B] text-white antialiased">
+      {activeSection && (
+        <DashboardModal
+          activeSection={activeSection}
+          onSelect={setActiveSection}
+          onClose={() => setActiveSection(null)}
+          user={user}
+          hasVerified={hasVerified}
+          setHasVerified={setHasVerified}
+        />
+      )}
+
+      <video autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover">
         <source src="/hero.mp4" type="video/mp4" />
       </video>
 
       <div className="noise-overlay pointer-events-none absolute inset-0 opacity-[0.7] mix-blend-overlay" />
-      <div className="pointer-events-none absolute inset-0 bg-black/65" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
-      <div className="relative z-10 mx-auto flex h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-[2rem] bg-[#09090B]/92 shadow-2xl shadow-black/40 backdrop-blur-xl">
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar user={user} />
-
-          <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
-            <WelcomeSection firstName={firstName} lastName={lastName} />
-            {user.walletPublicKey && <WalletInfoSection walletPublicKey={user.walletPublicKey} />}
-            <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)] lg:items-start">
-              <div>{hasVerified ? <CredentialCard /> : <EmptyState onVerify={() => setHasVerified(true)} />}</div>
-              <div className="lg:sticky lg:top-6">
-                <ProgressState hasVerified={hasVerified} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {!activeSection && <DashNavigation onSelect={setActiveSection} />}
+      <ProfileMenu user={user} />
     </main>
   );
 }
 
-function Sidebar() {
+function DashboardModal({
+  activeSection,
+  onSelect,
+  onClose,
+  user,
+  hasVerified,
+  setHasVerified,
+}: {
+  activeSection: DashSection;
+  onSelect: (section: DashSection) => void;
+  onClose: () => void;
+  user: DashboardUser;
+  hasVerified: boolean;
+  setHasVerified: (value: boolean) => void;
+}) {
   return (
-    <aside className="hidden w-72 shrink-0 bg-black/25 px-5 py-6 lg:flex lg:flex-col">
-      <Link
-        href="/"
-        className="flex h-12 items-center rounded-2xl px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
-        aria-label="StudentProof home"
+    <AnimatePresence>
+      <motion.div
+        key="dash-modal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="fixed inset-0 z-50 flex items-center justify-center px-6 pb-4 pt-12"
+        style={{ backdropFilter: "blur(1px)" }}
+        onClick={onClose}
       >
-        <Image
-          src="/StudentProof.svg"
-          alt="StudentProof"
-          width={311}
-          height={65}
-          priority
-          className="h-auto w-44"
-        />
-      </Link>
-
-      <nav className="mt-10 space-y-1" aria-label="Dashboard navigation">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={cn(
-              "flex h-11 w-full items-center gap-3 rounded-2xl px-3 text-sm text-zinc-400 motion-safe:transition-colors motion-safe:duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]",
-              item.active && "bg-[#111113] text-[#E1E0CC]",
-              !item.active && "hover:bg-[#111113] hover:text-white"
-            )}
-            type="button"
-          >
-            <item.icon className="h-4 w-4" aria-hidden="true" />
-            {item.label}
-          </button>
-        ))}
-      </nav>
-    </aside>
+        <DashNavigation currentSection={activeSection} onSelect={onSelect} className="z-[60]" />
+        <motion.div
+          key="dash-modal-card"
+          initial={{ opacity: 0, scale: 0.92, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: 24 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-[#09090B]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {activeSection === "home" && (
+            <HomeSection user={user} hasVerified={hasVerified} setHasVerified={setHasVerified} onClose={onClose} />
+          )}
+          {activeSection === "wallet" && <WalletSection user={user} onClose={onClose} />}
+          {activeSection === "activity" && <ActivitySection onClose={onClose} />}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
-function Topbar({ user }: { user: DashboardUser }) {
+function CloseButton({ onClose, label }: { onClose: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label={label}
+      className="absolute right-5 top-5 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
+    >
+      <X className="h-4 w-4" />
+    </button>
+  );
+}
+
+function HomeSection({
+  user,
+  hasVerified,
+  setHasVerified,
+  onClose,
+}: {
+  user: DashboardUser;
+  hasVerified: boolean;
+  setHasVerified: (value: boolean) => void;
+  onClose: () => void;
+}) {
+  const firstName = user.name.split(" ")[0] || "Dhanush";
+  const lastName = user.name.split(" ")[1] || "Doe";
+
+  return (
+    <div className="relative flex h-full flex-col">
+      <CloseButton onClose={onClose} label="Close dashboard" />
+
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-4 pt-10 sm:px-6 lg:px-8">
+        <section className="flex flex-col gap-2 pt-0 sm:pt-1">
+          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Welcome, {firstName} {lastName}
+          </h1>
+        </section>
+
+        {user.walletPublicKey && <WalletInfoSection walletPublicKey={user.walletPublicKey} />}
+
+        <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)] lg:items-start">
+          <div>{hasVerified ? <CredentialCard /> : <EmptyState onVerify={() => setHasVerified(true)} />}</div>
+          <div className="lg:sticky lg:top-6">
+            <ProgressState hasVerified={hasVerified} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WalletSection({ user, onClose }: { user: DashboardUser; onClose: () => void }) {
+  return (
+    <div className="relative flex h-full flex-col">
+      <CloseButton onClose={onClose} label="Close wallet" />
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Wallet</h1>
+        {user.walletPublicKey ? (
+          <WalletInfoSection walletPublicKey={user.walletPublicKey} />
+        ) : (
+          <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10">
+            <p className="text-zinc-400">No wallet has been created for your account yet.</p>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActivitySection({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="relative flex h-full flex-col">
+      <CloseButton onClose={onClose} label="Close activity" />
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Activity</h1>
+        <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-10 text-center">
+          <Activity className="mx-auto h-8 w-8 text-[#E1E0CC]" aria-hidden="true" />
+          <p className="mt-4 text-zinc-400">No activity yet. Your verification and credential events will show up here.</p>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ProfileMenu({ user }: { user: DashboardUser }) {
   const initial = user.name.charAt(0).toUpperCase();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -132,78 +207,59 @@ function Topbar({ user }: { user: DashboardUser }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 bg-[#09090B]/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4">
-        <Link
-          href="/"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#27272A] bg-[#111113] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC] lg:hidden"
-          aria-label="StudentProof home"
-        >
-        </Link>
+    <div ref={menuRef} className="fixed right-0 top-0 z-[70] w-32">
+      <button
+        type="button"
+        className={cn(
+          "flex w-full items-center justify-center gap-2 bg-black px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]",
+          isProfileMenuOpen ? "rounded-bl-2xl" : "rounded-2xl rounded-tr-none"
+        )}
+        aria-haspopup="menu"
+        aria-expanded={isProfileMenuOpen}
+        onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+      >
+        {user.image ? (
+          <span
+            className="h-6 w-6 rounded-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${user.image})` }}
+            aria-label={`${user.name} profile photo`}
+          />
+        ) : (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E1E0CC] text-[10px] font-semibold text-[#09090B]">
+            {initial}
+          </span>
+        )}
+        <ChevronDown
+          className="h-3.5 w-3.5 transition-transform"
+          style={{ color: "rgba(225, 224, 204, 0.8)", transform: isProfileMenuOpen ? "rotate(180deg)" : undefined }}
+          aria-hidden="true"
+        />
+      </button>
 
-        <div className="ml-auto flex items-center gap-2">
+      {isProfileMenuOpen ? (
+        <div role="menu" className="w-full overflow-hidden rounded-b-2xl bg-black p-1 shadow-xl">
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#27272A] bg-[#111113] text-zinc-400 motion-safe:transition-colors motion-safe:duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
             type="button"
-            aria-label="Notifications"
+            role="menuitem"
+            className="flex h-8 w-full items-center gap-2 rounded-xl px-2 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
+            style={{ color: "rgba(225, 224, 204, 0.8)" }}
           >
-            <Bell className="h-4 w-4" aria-hidden="true" />
+            <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+            Settings
           </button>
-
-          <div ref={menuRef} className="relative">
-            <button
-              type="button"
-              className="flex h-10 items-center gap-2 rounded-2xl border border-[#27272A] bg-[#111113] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
-              aria-haspopup="menu"
-              aria-expanded={isProfileMenuOpen}
-              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            >
-              {user.image ? (
-                <span
-                  className="h-7 w-7 rounded-full bg-cover bg-center ring-1 ring-[#27272A]"
-                  style={{ backgroundImage: `url(${user.image})` }}
-                  aria-label={`${user.name} profile photo`}
-                />
-              ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E1E0CC] text-xs font-semibold text-[#09090B]">
-                  {initial}
-                </span>
-              )}
-              <ChevronDown className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-            </button>
-
-            {isProfileMenuOpen ? (
-              <div
-                role="menu"
-                className="absolute right-0 z-30 mt-2 w-40 rounded-xl border border-[#27272A] bg-[#111113] p-1 shadow-xl"
-              >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="flex h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm text-zinc-200 hover:bg-[#17171A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
-                >
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  Logout
-                </button>
-              </div>
-            ) : null}
-          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex h-8 w-full items-center gap-2 rounded-xl px-2 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
+            style={{ color: "rgba(225, 224, 204, 0.8)" }}
+          >
+            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+            Logout
+          </button>
         </div>
-      </div>
-    </header>
-  );
-}
-
-function WelcomeSection({ firstName, lastName }: { firstName: string; lastName: string }) {
-  return (
-    <section className="flex flex-col gap-2 pt-0 sm:pt-1">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Welcome, {firstName} {lastName}
-        </h1>
-      </div>
-    </section>
+      ) : null}
+    </div>
   );
 }
 
