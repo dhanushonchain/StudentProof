@@ -130,6 +130,15 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
           {!showDocs ? (
             <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
               <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
+                {user && (
+                  <Link
+                    href="/dashboard"
+                    className="text-[10px] transition-colors sm:text-xs md:text-sm"
+                    style={{ color: "rgba(225, 224, 204, 0.8)" }}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 {navItems.map((item) => {
                   const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/api";
 
@@ -203,6 +212,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                   Millions of students do not have university email addresses. StudentProof replaces email-based verification with reusable on-chain Proof of Student. Verify once using your student ID and securely prove your student status anywhere.
                 </motion.p>
 
+                {!user && (
                 <motion.button
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -215,12 +225,12 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                   className="group inline-flex items-center gap-2 self-start rounded-full bg-[#F5F5F2] py-1 pl-5 pr-1 text-sm font-medium transition-all hover:gap-3 sm:text-base"
                 >
                   Get Started
-              
+
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:h-10 sm:w-10">
                     <ArrowRight className="h-4 w-4 text-[#E1E0CC]" />
                   </span>
                 </motion.button>
-
+                )}
               </div>
             </div>
           </div>
