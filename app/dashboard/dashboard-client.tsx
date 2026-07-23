@@ -117,7 +117,11 @@ function HomeSection({
 
         <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
           <div className="w-full">
-            {verifiedAt ? <CredentialCard /> : <EmptyState onVerify={() => setVerifiedAt(new Date().toISOString())} />}
+            {verifiedAt ? (
+              <CredentialCard walletPublicKey={user.walletPublicKey} />
+            ) : (
+              <EmptyState onVerify={() => setVerifiedAt(new Date().toISOString())} />
+            )}
           </div>
         </div>
       </div>
@@ -166,7 +170,7 @@ function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt
   if (user.walletPublicKey && user.loginAt) {
     events.push({
       icon: Wallet,
-      title: "Stellar wallet created",
+      title: "Avalanche wallet created",
       detail: "Wallet automatically generated for your account",
       address: user.walletPublicKey,
       timestamp: new Date(user.loginAt),
@@ -237,7 +241,7 @@ function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt
   );
 }
 
-function CredentialCard() {
+function CredentialCard({ walletPublicKey }: { walletPublicKey: string | null }) {
   return (
     <section className="overflow-hidden rounded-[2rem] border border-[#27272A] bg-[#111113]">
       <div className="relative p-5 sm:p-6">
@@ -259,9 +263,11 @@ function CredentialCard() {
             <ActionButton icon={QrCode} quiet>
               View QR Code
             </ActionButton>
-            <ActionButton icon={ExternalLink} quiet>
-              View on Stellar Explorer
-            </ActionButton>
+            {walletPublicKey && (
+              <ActionButton icon={ExternalLink} quiet href={`https://testnet.snowtrace.io/address/${walletPublicKey}`}>
+                View on Snowtrace
+              </ActionButton>
+            )}
           </div>
         </div>
       </div>
@@ -273,22 +279,36 @@ function ActionButton({
   children,
   icon: Icon,
   quiet = false,
+  href,
 }: {
   children: ReactNode;
   icon: LucideIcon;
   quiet?: boolean;
+  href?: string;
 }) {
+  const className = cn(
+    "h-11 rounded-2xl px-4 focus-visible:ring-[#E1E0CC]",
+    quiet
+      ? "border-[#27272A] bg-[#09090B] text-zinc-300 hover:bg-[#17171A] hover:text-white"
+      : "bg-[#E1E0CC] text-[#09090B] hover:bg-[#f0efdb]"
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(className, "inline-flex items-center justify-center gap-2 text-sm font-medium")}
+      >
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <Button
-      type="button"
-      className={cn(
-        "h-11 rounded-2xl px-4 focus-visible:ring-[#E1E0CC]",
-        quiet
-          ? "border-[#27272A] bg-[#09090B] text-zinc-300 hover:bg-[#17171A] hover:text-white"
-          : "bg-[#E1E0CC] text-[#09090B] hover:bg-[#f0efdb]"
-      )}
-      variant={quiet ? "outline" : "default"}
-    >
+    <Button type="button" className={className} variant={quiet ? "outline" : "default"}>
       <Icon className="h-4 w-4" aria-hidden="true" />
       {children}
     </Button>
@@ -320,10 +340,10 @@ function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <Wallet className="h-5 w-5 text-[#E1E0CC]" aria-hidden="true" />
-          <h3 className="text-lg font-semibold text-white">Your Stellar Wallet</h3>
+          <h3 className="text-lg font-semibold text-white">Your Avalanche Wallet</h3>
         </div>
         <div className="space-y-2">
-          <p className="text-sm text-zinc-400">Public Key</p>
+          <p className="text-sm text-zinc-400">Wallet Address</p>
           <div className="flex flex-col items-start gap-2 rounded-lg border border-[#27272A] bg-[#09090B] p-3 sm:flex-row sm:items-center">
             <code className="min-w-0 flex-1 break-all font-mono text-sm text-[#E1E0CC]">{walletPublicKey}</code>
             <button
@@ -338,7 +358,7 @@ function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
             </button>
           </div>
           <p className="text-xs text-zinc-500">
-            This wallet was automatically created and will be used for your student credentials on Stellar.
+            This wallet was automatically created and will be used for your student credentials on Avalanche.
           </p>
         </div>
       </div>

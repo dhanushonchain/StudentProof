@@ -60,8 +60,8 @@ One verification. Unlimited reuse.
 
 ## Blockchain
 
-- Stellar
-- Soroban Smart Contracts
+- Avalanche C-Chain (Fuji testnet)
+- viem
 
 ---
 

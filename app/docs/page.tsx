@@ -488,7 +488,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 {/* Tech Stack */}
                 <h2 style={h2Style}>Technology Stack</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["Next.js", "React", "Tailwind CSS", "TypeScript", "Python", "EasyOCR", "OpenCV", "Stellar", "Soroban", "PostgreSQL", "Google OAuth", "Node.js"].map((tech) => (
+                  {["Next.js", "React", "Tailwind CSS", "TypeScript", "Python", "EasyOCR", "OpenCV", "Avalanche C-Chain", "viem", "PostgreSQL", "Google OAuth", "Node.js"].map((tech) => (
                     <div
                       key={tech}
                       className="rounded-xl py-4 text-center text-sm transition-all duration-200"
