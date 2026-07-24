@@ -1,6 +1,5 @@
 "use client";
 
-import { recordLogout } from "@/lib/activity-log";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -68,8 +67,8 @@ export function ProfileMenu({ user }: { user: ProfileMenuUser }) {
           <button
             type="button"
             role="menuitem"
-            onClick={() => {
-              if (user.email) recordLogout(user.email);
+            onClick={async () => {
+              await fetch("/api/activity/logout", { method: "POST" }).catch(() => {});
               signOut({ callbackUrl: "/" });
             }}
             className="flex h-8 w-full items-center gap-1.5 rounded-xl px-1.5 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"

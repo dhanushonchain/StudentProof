@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  googleSub     String    @unique
+  email         String
+  walletAddress String    @unique
+  createdAt     DateTime  @default(now())
+
+  activityEvents      ActivityEvent[]
+  verificationRecords VerificationRecord[]
+  credentials         Credential[]
+}
+
+model ActivityEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventType String   // "login" | "logout" | "wallet_created" | "verification_completed" | "credential_issued"
+  metadata  Json?
+  timestamp DateTime @default(now())
+}
+
+model VerificationRecord {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  provider       String    // "reclaim"
+  status         String    // "pending" | "verified" | "failed"
+  proofReference String?
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model Credential {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  contractAddress String
+  tokenId         String
+  status          String   // "active" | "revoked"
+  issuedAt        DateTime @default(now())
+}

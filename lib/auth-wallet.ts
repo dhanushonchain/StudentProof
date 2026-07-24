@@ -7,9 +7,9 @@
 // top-level import) keeps that dependency graph out of anything that gets bundled
 // for the Edge Runtime, e.g. middleware.ts via auth.config.ts.
 
-export async function createWalletForNewUser(googleSub: string): Promise<string> {
+export async function createWalletForNewUser(googleSub: string): Promise<{ publicKey: string; funded: boolean }> {
   // Lazy-import wallet module to keep it out of edge bundle analysis
   const { getOrCreateWallet } = await import("./wallet");
-  const { publicKey } = await getOrCreateWallet(googleSub, true);
-  return publicKey;
+  const { publicKey, funded } = await getOrCreateWallet(googleSub, true);
+  return { publicKey, funded };
 }

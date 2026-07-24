@@ -3,7 +3,7 @@
 import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-bar";
 import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
-import { type ActivityLogEntry, getActivityLog, recordLoginIfNew } from "@/lib/activity-log";
+import type { ActivityEventDTO } from "@/lib/activity-db";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, Check, ExternalLink, type LucideIcon, LogIn, LogOut, QrCode, ShieldCheck, Wallet } from "lucide-react";
@@ -17,7 +17,7 @@ export type DashboardUser = {
   loginAt: string | null;
 };
 
-export default function DashboardClient({ user }: { user: DashboardUser }) {
+export default function DashboardClient({ user, activity }: { user: DashboardUser; activity: ActivityEventDTO[] }) {
   const [activeSection, setActiveSection] = useState<DashSection | null>("home");
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
 
@@ -29,6 +29,7 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
           onSelect={setActiveSection}
           onClose={() => setActiveSection(null)}
           user={user}
+          activity={activity}
           verifiedAt={verifiedAt}
           setVerifiedAt={setVerifiedAt}
         />
@@ -52,6 +53,7 @@ function DashboardModal({
   onSelect,
   onClose,
   user,
+  activity,
   verifiedAt,
   setVerifiedAt,
 }: {
@@ -59,6 +61,7 @@ function DashboardModal({
   onSelect: (section: DashSection) => void;
   onClose: () => void;
   user: DashboardUser;
+  activity: ActivityEventDTO[];
   verifiedAt: string | null;
   setVerifiedAt: (value: string | null) => void;
 }) {
@@ -86,7 +89,7 @@ function DashboardModal({
         >
           {activeSection === "home" && <HomeSection user={user} verifiedAt={verifiedAt} setVerifiedAt={setVerifiedAt} />}
           {activeSection === "wallet" && <WalletSection user={user} onClose={onClose} />}
-          {activeSection === "activity" && <ActivitySection user={user} verifiedAt={verifiedAt} />}
+          {activeSection === "activity" && <ActivitySection user={user} activity={activity} />}
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -146,48 +149,28 @@ function WalletSection({ user, onClose }: { user: DashboardUser; onClose: () => 
   );
 }
 
-type ActivityEvent = {
-  icon: LucideIcon;
-  title: string;
-  detail: string;
-  address?: string;
-  timestamp: Date;
+const EVENT_DISPLAY: Record<string, { icon: LucideIcon; title: string }> = {
+  login: { icon: LogIn, title: "Signed in with Google" },
+  logout: { icon: LogOut, title: "Signed out" },
+  wallet_created: { icon: Wallet, title: "Avalanche wallet created" },
+  verification_completed: { icon: ShieldCheck, title: "Verification completed" },
+  credential_issued: { icon: ShieldCheck, title: "Student credential issued" },
 };
 
-function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt: string | null }) {
-  const [authEvents] = useState<ActivityLogEntry[]>(() => {
-    if (user.loginAt) recordLoginIfNew(user.email, user.loginAt);
-    return getActivityLog(user.email);
+function ActivitySection({ user, activity }: { user: DashboardUser; activity: ActivityEventDTO[] }) {
+  const events = activity.map((event) => {
+    const display = EVENT_DISPLAY[event.eventType] ?? { icon: Activity, title: event.eventType };
+    const isWalletCreated = event.eventType === "wallet_created";
+
+    return {
+      icon: display.icon,
+      title: display.title,
+      detail: isWalletCreated ? "Wallet automatically generated for your account" : user.email,
+      address: isWalletCreated ? (user.walletPublicKey ?? undefined) : undefined,
+      timestamp: new Date(event.timestamp),
+      key: event.id,
+    };
   });
-
-  const events: ActivityEvent[] = authEvents.map((entry) => ({
-    icon: entry.type === "login" ? LogIn : LogOut,
-    title: entry.type === "login" ? "Signed in with Google" : "Signed out",
-    detail: user.email,
-    timestamp: new Date(entry.timestamp),
-  }));
-
-  if (user.walletPublicKey && user.loginAt) {
-    events.push({
-      icon: Wallet,
-      title: "Avalanche wallet created",
-      detail: "Wallet automatically generated for your account",
-      address: user.walletPublicKey,
-      timestamp: new Date(user.loginAt),
-    });
-  }
-
-  if (verifiedAt) {
-    events.push({
-      icon: ShieldCheck,
-      title: "Student credential issued",
-      detail: "Verified with Reclaim Protocol",
-      address: user.walletPublicKey ?? undefined,
-      timestamp: new Date(verifiedAt),
-    });
-  }
-
-  events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   return (
     <div className="relative flex h-full flex-col">
@@ -201,8 +184,8 @@ function ActivitySection({ user, verifiedAt }: { user: DashboardUser; verifiedAt
           </section>
         ) : (
           <ol className="flex flex-col gap-3">
-            {events.map((event, index) => (
-              <li key={index} className="rounded-[1.5rem] border border-[#27272A] bg-[#111113] p-5 sm:p-6">
+            {events.map((event) => (
+              <li key={event.key} className="rounded-[1.5rem] border border-[#27272A] bg-[#111113] p-5 sm:p-6">
                 <div className="flex items-start gap-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#27272A] bg-[#09090B]">
                     <event.icon className="h-4 w-4 text-[#E1E0CC]" aria-hidden="true" />

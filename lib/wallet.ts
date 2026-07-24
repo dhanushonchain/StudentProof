@@ -57,7 +57,11 @@ async function isWalletFunded(address: Address): Promise<boolean> {
 //
 // Skips funding if the wallet already has a balance. Non-fatal if already funded (mirrors
 // Friendbot's "already funded" handling); this allows repeat sign-ins to work correctly.
-export async function fundWalletFromDistributor(address: Address): Promise<void> {
+//
+// Returns whether a transaction was actually sent (true) vs. skipped because the wallet
+// was already funded (false) — callers use this to distinguish a genuinely new wallet
+// from a repeat sign-in.
+export async function fundWalletFromDistributor(address: Address): Promise<boolean> {
   const distributorKey = process.env.DISTRIBUTOR_WALLET_PRIVATE_KEY as Hex | undefined;
   if (!distributorKey) {
     throw new Error("DISTRIBUTOR_WALLET_PRIVATE_KEY environment variable is not set");
@@ -67,7 +71,7 @@ export async function fundWalletFromDistributor(address: Address): Promise<void>
     const alreadyFunded = await isWalletFunded(address);
     if (alreadyFunded) {
       // Wallet already funded, nothing to do
-      return;
+      return false;
     }
 
     const distributorAccount = privateKeyToAccount(distributorKey);
@@ -83,6 +87,7 @@ export async function fundWalletFromDistributor(address: Address): Promise<void>
     });
 
     await publicClient.waitForTransactionReceipt({ hash });
+    return true;
   } catch (error) {
     console.error("Failed to fund wallet from distributor:", error);
     throw error;
@@ -95,16 +100,18 @@ export async function fundWalletFromDistributor(address: Address): Promise<void>
 export async function getOrCreateWallet(
   googleSub: string,
   isFirstLogin: boolean
-): Promise<{ publicKey: string; privateKey: string }> {
+): Promise<{ publicKey: string; privateKey: string; funded: boolean }> {
   const { account, privateKey } = deriveAccount(googleSub);
 
+  let funded = false;
   if (isFirstLogin) {
     // Fund the wallet on first login so it's immediately usable
-    await fundWalletFromDistributor(account.address);
+    funded = await fundWalletFromDistributor(account.address);
   }
 
   return {
     publicKey: account.address,
     privateKey, // Only exposed internally; never sent to client
+    funded,
   };
 }
