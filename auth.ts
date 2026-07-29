@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { after } from "next/server";
 import { authConfig } from "./auth.config";
 
 // Server-only auth instance with wallet callbacks
@@ -36,6 +37,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           walletAddress: token.walletPublicKey as string,
           walletFunded,
         });
+
+        // Genuinely new account (wallet was just funded, not a repeat sign-in) — send the
+        // welcome email. Scheduled via after() so it can't slow down or fail sign-in: it
+        // runs once the response is on its way out, and errors are caught inside the
+        // function itself, never propagating back here.
+        if (walletFunded && profile.email) {
+          const email = profile.email;
+          after(async () => {
+            const { sendWelcomeEmail } = await import("@/lib/welcome-email");
+            await sendWelcomeEmail(email);
+          });
+        }
       }
 
       return token;
