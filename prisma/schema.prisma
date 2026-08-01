@@ -35,6 +35,7 @@ model VerificationRecord {
   provider       String    // "reclaim"
   status         String    // "pending" | "verified" | "failed"
   proofReference String?
+  reclaimSessionId String?
   verifiedAt     DateTime?
   createdAt      DateTime  @default(now())
 }

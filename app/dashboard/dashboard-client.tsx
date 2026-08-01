@@ -4,10 +4,21 @@ import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-
 import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
 import type { ActivityEventDTO } from "@/lib/activity-db";
+import type { VerificationDTO } from "@/lib/verification-db";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Check, ExternalLink, type LucideIcon, LogIn, LogOut, QrCode, ShieldCheck, Wallet } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import {
+  Activity,
+  ExternalLink,
+  Loader2,
+  type LucideIcon,
+  LogIn,
+  LogOut,
+  QrCode,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 
 export type DashboardUser = {
   name: string;
@@ -17,9 +28,87 @@ export type DashboardUser = {
   loginAt: string | null;
 };
 
-export default function DashboardClient({ user, activity }: { user: DashboardUser; activity: ActivityEventDTO[] }) {
+// While a verification is pending, poll for its result every few seconds so a
+// live demo doesn't require a manual page refresh. Give up auto-polling after
+// a minute — Reclaim's protocol has no signal for "the user closed the tab",
+// so a session can sit in a non-terminal state forever with nothing telling
+// us it failed. Past the timeout, fall back to a manual "check status" (in
+// case it actually finished and we just missed it) and "try again" (starts a
+// brand new session) pair of buttons instead of polling forever.
+const POLL_INTERVAL_MS = 4000;
+const POLL_TIMEOUT_MS = 60 * 1000;
+
+export default function DashboardClient({
+  user,
+  activity,
+  verification: initialVerification,
+}: {
+  user: DashboardUser;
+  activity: ActivityEventDTO[];
+  verification: VerificationDTO | null;
+}) {
   const [activeSection, setActiveSection] = useState<DashSection | null>("home");
-  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
+  const [verification, setVerification] = useState<VerificationDTO | null>(initialVerification);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
+
+  const checkVerificationStatus = useCallback(async () => {
+    try {
+      const url = sessionId
+        ? `/api/verification/status?sessionId=${encodeURIComponent(sessionId)}`
+        : "/api/verification/status";
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.verification) setVerification(data.verification);
+    } catch {
+      // Transient network error — the next poll tick or manual click will retry.
+    }
+  }, [sessionId]);
+
+  // Lives at this level (not inside HomeSection) so polling keeps running even
+  // if the user switches to the Wallet/Activity section mid-verification.
+  useEffect(() => {
+    if (verification?.status !== "pending") {
+      setPollTimedOut(false);
+      return;
+    }
+
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        setPollTimedOut(true);
+        clearInterval(interval);
+        return;
+      }
+      checkVerificationStatus();
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+    // verification?.id (not just status) is a dependency on purpose: retrying
+    // creates a new record whose status is still "pending" — the same string
+    // as before — so without watching id too, a retry after a timeout would
+    // never restart this effect and the timer/pollTimedOut flag would stay stuck.
+  }, [verification?.id, verification?.status, checkVerificationStatus]);
+
+  const startVerification = useCallback(async () => {
+    const res = await fetch("/api/verification/start", { method: "POST" });
+    if (!res.ok) {
+      console.error("Failed to start verification");
+      return;
+    }
+    const data = await res.json();
+    window.open(data.requestUrl, "_blank", "noopener,noreferrer");
+    setSessionId(data.sessionId ?? null);
+    setVerification({
+      id: data.verificationId,
+      status: "pending",
+      proofReference: null,
+      reclaimSessionId: data.sessionId ?? null,
+      verifiedAt: null,
+      createdAt: new Date().toISOString(),
+    });
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#09090B] text-white antialiased">
@@ -30,8 +119,10 @@ export default function DashboardClient({ user, activity }: { user: DashboardUse
           onClose={() => setActiveSection(null)}
           user={user}
           activity={activity}
-          verifiedAt={verifiedAt}
-          setVerifiedAt={setVerifiedAt}
+          verification={verification}
+          pollTimedOut={pollTimedOut}
+          onStartVerification={startVerification}
+          onCheckStatus={checkVerificationStatus}
         />
       )}
 
@@ -54,16 +145,20 @@ function DashboardModal({
   onClose,
   user,
   activity,
-  verifiedAt,
-  setVerifiedAt,
+  verification,
+  pollTimedOut,
+  onStartVerification,
+  onCheckStatus,
 }: {
   activeSection: DashSection;
   onSelect: (section: DashSection) => void;
   onClose: () => void;
   user: DashboardUser;
   activity: ActivityEventDTO[];
-  verifiedAt: string | null;
-  setVerifiedAt: (value: string | null) => void;
+  verification: VerificationDTO | null;
+  pollTimedOut: boolean;
+  onStartVerification: () => void;
+  onCheckStatus: () => void;
 }) {
   return (
     <AnimatePresence>
@@ -87,7 +182,15 @@ function DashboardModal({
           className="relative z-10 h-[86vh] w-full max-w-[92rem] overflow-hidden rounded-3xl bg-[#09090B]"
           onClick={(e) => e.stopPropagation()}
         >
-          {activeSection === "home" && <HomeSection user={user} verifiedAt={verifiedAt} setVerifiedAt={setVerifiedAt} />}
+          {activeSection === "home" && (
+            <HomeSection
+              user={user}
+              verification={verification}
+              pollTimedOut={pollTimedOut}
+              onStartVerification={onStartVerification}
+              onCheckStatus={onCheckStatus}
+            />
+          )}
           {activeSection === "wallet" && <WalletSection user={user} onClose={onClose} />}
           {activeSection === "activity" && <ActivitySection user={user} activity={activity} />}
         </motion.div>
@@ -99,12 +202,16 @@ function DashboardModal({
 
 function HomeSection({
   user,
-  verifiedAt,
-  setVerifiedAt,
+  verification,
+  pollTimedOut,
+  onStartVerification,
+  onCheckStatus,
 }: {
   user: DashboardUser;
-  verifiedAt: string | null;
-  setVerifiedAt: (value: string | null) => void;
+  verification: VerificationDTO | null;
+  pollTimedOut: boolean;
+  onStartVerification: () => void;
+  onCheckStatus: () => void;
 }) {
   const firstName = user.name.split(" ")[0] || "Dhanush";
   const lastName = user.name.split(" ")[1] || "Doe";
@@ -120,15 +227,57 @@ function HomeSection({
 
         <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
           <div className="w-full">
-            {verifiedAt ? (
+            {verification?.status === "verified" ? (
               <CredentialCard walletPublicKey={user.walletPublicKey} />
+            ) : verification?.status === "pending" ? (
+              <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
             ) : (
-              <EmptyState onVerify={() => setVerifiedAt(new Date().toISOString())} />
+              <EmptyState onVerify={onStartVerification} />
             )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function PendingState({
+  pollTimedOut,
+  onCheckStatus,
+  onRetry,
+}: {
+  pollTimedOut: boolean;
+  onCheckStatus: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#27272A] bg-[#09090B]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#E1E0CC]" aria-hidden="true" />
+      </div>
+      <h3 className="mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+        {pollTimedOut ? "Didn't hear back in time" : "Verification in progress"}
+      </h3>
+      <p className="mx-auto mt-3 max-w-lg leading-7 text-zinc-400">
+        {pollTimedOut
+          ? "This can happen if the SAMARTH login tab was closed early, the session expired, or it's just slow. Check status in case it actually finished, or start over."
+          : "Complete the SAMARTH login in the tab that just opened. This page will update automatically once it's done."}
+      </p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Button
+          onClick={onCheckStatus}
+          className="h-11 rounded-2xl border-[#27272A] bg-[#09090B] px-6 text-zinc-300 hover:bg-[#17171A] hover:text-white"
+          variant="outline"
+        >
+          Check status
+        </Button>
+        {pollTimedOut && (
+          <Button onClick={onRetry} className="h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb]">
+            Try again
+          </Button>
+        )}
+      </div>
+    </section>
   );
 }
 

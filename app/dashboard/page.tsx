@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { getRecentActivity } from "@/lib/activity-db";
+import { getLatestVerification } from "@/lib/verification-db";
 import { redirect } from "next/navigation";
 import DashboardClient, { type DashboardUser } from "./dashboard-client";
 
@@ -19,6 +20,7 @@ export default async function Dashboard() {
   };
 
   const activity = user.walletPublicKey ? await getRecentActivity(user.walletPublicKey) : [];
+  const verification = user.walletPublicKey ? await getLatestVerification(user.walletPublicKey) : null;
 
-  return <DashboardClient user={user} activity={activity} />;
+  return <DashboardClient user={user} activity={activity} verification={verification} />;
 }

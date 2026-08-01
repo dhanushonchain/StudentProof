@@ -1,0 +1,9 @@
+# Compiler artifacts
+cache/
+out/
+
+# Dependencies — restore with: forge install
+lib/
+
+# Deployment broadcast logs can contain RPC URLs; keep tx history but not this
+broadcast/*/dry-run/
