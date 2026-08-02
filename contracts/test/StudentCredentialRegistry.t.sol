@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {VerificationProviderRegistry} from "../src/VerificationProviderRegistry.sol";
 import {StudentCredentialRegistry} from "../src/StudentCredentialRegistry.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {IERC721Errors} from "openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol";
 
 contract StudentCredentialRegistryTest is Test {
     VerificationProviderRegistry registry;
@@ -42,6 +43,29 @@ contract StudentCredentialRegistryTest is Test {
         StudentCredentialRegistry.CredentialData memory data = credential.credentialOf(student);
         assertEq(data.providerId, "reclaim");
         assertEq(data.issuedAt, block.timestamp);
+    }
+
+    function test_tokenURIReturnsBase64JsonWithImage() public {
+        vm.prank(minter);
+        uint256 tokenId = credential.mintCredential(student, "reclaim");
+
+        string memory uri = credential.tokenURI(tokenId);
+        assertTrue(_startsWith(uri, "data:application/json;base64,"));
+    }
+
+    function test_tokenURIRevertsForNonexistentToken() public {
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 999));
+        credential.tokenURI(999);
+    }
+
+    function _startsWith(string memory str, string memory prefix) private pure returns (bool) {
+        bytes memory strBytes = bytes(str);
+        bytes memory prefixBytes = bytes(prefix);
+        if (strBytes.length < prefixBytes.length) return false;
+        for (uint256 i = 0; i < prefixBytes.length; i++) {
+            if (strBytes[i] != prefixBytes[i]) return false;
+        }
+        return true;
     }
 
     function test_strangerCannotMint() public {

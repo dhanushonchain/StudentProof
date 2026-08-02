@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Base64} from "openzeppelin-contracts/contracts/utils/Base64.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {VerificationProviderRegistry} from "./VerificationProviderRegistry.sol";
 
 /// @notice Soulbound (non-transferable) student credential, minted once a
@@ -24,6 +26,10 @@ contract StudentCredentialRegistry is ERC721, Ownable {
     VerificationProviderRegistry public immutable providerRegistry;
     address public authorizedMinter;
 
+    // Same badge image for every token — no per-student data, matches the
+    // rest of this contract storing nothing beyond provider + timestamp.
+    string private constant IMAGE_URI = "https://studentproof.app/nft/pos-nft.png";
+
     uint256 private _nextTokenId = 1;
     mapping(address => uint256) private _tokenIdByHolder;
     mapping(uint256 => CredentialData) private _credentialData;
@@ -44,7 +50,7 @@ contract StudentCredentialRegistry is ERC721, Ownable {
         _;
     }
 
-    constructor(address registryAddress, address initialMinter) ERC721("StudentProof Credential", "SPROOF") Ownable(msg.sender) {
+    constructor(address registryAddress, address initialMinter) ERC721("StudentProof", "SPROOF") Ownable(msg.sender) {
         providerRegistry = VerificationProviderRegistry(registryAddress);
         authorizedMinter = initialMinter;
         emit MinterUpdated(address(0), initialMinter);
@@ -91,6 +97,18 @@ contract StudentCredentialRegistry is ERC721, Ownable {
         uint256 tokenId = _tokenIdByHolder[wallet];
         if (tokenId == 0) revert NoCredential(wallet);
         return _credentialData[tokenId];
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireOwned(tokenId);
+
+        string memory json = string.concat(
+            '{"name":"Proof of Student #', Strings.toString(tokenId),
+            '","description":"A soulbound StudentProof credential, verified via Reclaim Protocol.",',
+            '"image":"', IMAGE_URI, '"}'
+        );
+
+        return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
     }
 
     // --- Soulbound: block every transfer path, mint/burn still allowed ---
