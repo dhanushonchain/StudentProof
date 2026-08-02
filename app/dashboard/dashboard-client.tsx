@@ -4,7 +4,7 @@ import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-
 import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
 import type { ActivityEventDTO } from "@/lib/activity-db";
-import type { VerificationDTO } from "@/lib/verification-db";
+import type { CredentialDTO, VerificationDTO } from "@/lib/verification-db";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -42,10 +42,14 @@ export default function DashboardClient({
   user,
   activity,
   verification: initialVerification,
+  credential,
+  credentialContractAddress,
 }: {
   user: DashboardUser;
   activity: ActivityEventDTO[];
   verification: VerificationDTO | null;
+  credential: CredentialDTO | null;
+  credentialContractAddress: string | null;
 }) {
   const [activeSection, setActiveSection] = useState<DashSection | null>("home");
   const [verification, setVerification] = useState<VerificationDTO | null>(initialVerification);
@@ -120,6 +124,8 @@ export default function DashboardClient({
           user={user}
           activity={activity}
           verification={verification}
+          credential={credential}
+          credentialContractAddress={credentialContractAddress}
           pollTimedOut={pollTimedOut}
           onStartVerification={startVerification}
           onCheckStatus={checkVerificationStatus}
@@ -146,6 +152,8 @@ function DashboardModal({
   user,
   activity,
   verification,
+  credential,
+  credentialContractAddress,
   pollTimedOut,
   onStartVerification,
   onCheckStatus,
@@ -156,6 +164,8 @@ function DashboardModal({
   user: DashboardUser;
   activity: ActivityEventDTO[];
   verification: VerificationDTO | null;
+  credential: CredentialDTO | null;
+  credentialContractAddress: string | null;
   pollTimedOut: boolean;
   onStartVerification: () => void;
   onCheckStatus: () => void;
@@ -186,6 +196,8 @@ function DashboardModal({
             <HomeSection
               user={user}
               verification={verification}
+              credential={credential}
+              credentialContractAddress={credentialContractAddress}
               pollTimedOut={pollTimedOut}
               onStartVerification={onStartVerification}
               onCheckStatus={onCheckStatus}
@@ -203,12 +215,16 @@ function DashboardModal({
 function HomeSection({
   user,
   verification,
+  credential,
+  credentialContractAddress,
   pollTimedOut,
   onStartVerification,
   onCheckStatus,
 }: {
   user: DashboardUser;
   verification: VerificationDTO | null;
+  credential: CredentialDTO | null;
+  credentialContractAddress: string | null;
   pollTimedOut: boolean;
   onStartVerification: () => void;
   onCheckStatus: () => void;
@@ -228,7 +244,7 @@ function HomeSection({
         <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
           <div className="w-full">
             {verification?.status === "verified" ? (
-              <CredentialCard walletPublicKey={user.walletPublicKey} />
+              <CredentialCard credential={credential} contractAddress={credentialContractAddress} />
             ) : verification?.status === "pending" ? (
               <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
             ) : (
@@ -373,35 +389,62 @@ function ActivitySection({ user, activity }: { user: DashboardUser; activity: Ac
   );
 }
 
-function CredentialCard({ walletPublicKey }: { walletPublicKey: string | null }) {
-  return (
-    <section className="overflow-hidden rounded-[2rem] border border-[#27272A] bg-[#111113]">
-      <div className="relative p-5 sm:p-6">
-        <div className="relative flex flex-col gap-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                  Student Credential Issued
-                </span>
-              </div>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
-                Your student proof is verified and reusable across supported applications.
-              </p>
-            </div>
-          </div>
+const CREDENTIAL_IMAGE_URL = "https://studentproof.app/nft/pos-nft.png";
 
-          <div className="flex flex-wrap gap-3">
-            <ActionButton icon={QrCode} quiet>
-              View QR Code
-            </ActionButton>
-            {walletPublicKey && (
-              <ActionButton icon={ExternalLink} quiet href={`https://testnet.snowtrace.io/address/${walletPublicKey}`}>
-                View on Snowtrace
-              </ActionButton>
-            )}
-          </div>
-        </div>
+function CredentialCard({
+  credential,
+  contractAddress,
+}: {
+  credential: CredentialDTO | null;
+  contractAddress: string | null;
+}) {
+  if (!credential) {
+    // Verification succeeded but minting hasn't landed yet (or failed) — the
+    // off-chain status and on-chain credential are tracked separately on
+    // purpose (see lib/verification-db.ts markVerified), so this state is
+    // real and expected, not an error.
+    return (
+      <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+        <h3 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Verification Complete</h3>
+        <p className="mx-auto mt-3 max-w-lg leading-7 text-zinc-400">
+          Your credential is being issued on-chain. This can take a moment — refresh shortly.
+        </p>
+      </section>
+    );
+  }
+
+  // Always the NFT's own token page — contractAddress + tokenId, never the
+  // wallet or bare contract address — and always the live, currently
+  // configured contract (see the comment in app/dashboard/page.tsx), not
+  // whatever happens to be stored on this Credential row.
+  const snowtraceUrl =
+    contractAddress && credential.tokenId
+      ? `https://testnet.snowtrace.io/nft/${contractAddress}/${credential.tokenId}?chainid=43113&type=erc721`
+      : null;
+  const issuedDate = new Date(credential.issuedAt).toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+  return (
+    <section className="flex flex-col items-center rounded-[2rem] border border-[#27272A] bg-[#111113] px-6 py-10 text-center sm:px-10">
+      <div className="h-64 w-64 sm:h-80 sm:w-80">
+        {/* eslint-disable-next-line @next/next/no-img-element -- external, contract-controlled URL */}
+        <img src={CREDENTIAL_IMAGE_URL} alt="Proof of Student credential artwork" className="h-full w-full object-cover" />
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Proof of Student</span>
+      </div>
+
+      <p className="mt-2 text-sm text-zinc-500">Issued {issuedDate}</p>
+
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <ActionButton icon={ExternalLink} quiet href={snowtraceUrl ?? undefined} disabled={!snowtraceUrl}>
+          View on Blockchain(Snowtrace)
+        </ActionButton>
       </div>
     </section>
   );
@@ -412,18 +455,30 @@ function ActionButton({
   icon: Icon,
   quiet = false,
   href,
+  disabled = false,
 }: {
   children: ReactNode;
   icon: LucideIcon;
   quiet?: boolean;
   href?: string;
+  disabled?: boolean;
 }) {
   const className = cn(
     "h-11 rounded-2xl px-4 focus-visible:ring-[#E1E0CC]",
     quiet
       ? "border-[#27272A] bg-[#09090B] text-zinc-300 hover:bg-[#17171A] hover:text-white"
-      : "bg-[#E1E0CC] text-[#09090B] hover:bg-[#f0efdb]"
+      : "bg-[#E1E0CC] text-[#09090B] hover:bg-[#f0efdb]",
+    disabled && "pointer-events-none opacity-40"
   );
+
+  if (disabled) {
+    return (
+      <Button type="button" disabled className={className} variant={quiet ? "outline" : "default"}>
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        {children}
+      </Button>
+    );
+  }
 
   if (href) {
     return (

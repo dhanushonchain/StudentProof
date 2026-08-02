@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { getRecentActivity } from "@/lib/activity-db";
-import { getLatestVerification } from "@/lib/verification-db";
+import { getCredential, getLatestVerification } from "@/lib/verification-db";
 import { redirect } from "next/navigation";
 import DashboardClient, { type DashboardUser } from "./dashboard-client";
 
@@ -21,6 +21,21 @@ export default async function Dashboard() {
 
   const activity = user.walletPublicKey ? await getRecentActivity(user.walletPublicKey) : [];
   const verification = user.walletPublicKey ? await getLatestVerification(user.walletPublicKey) : null;
+  const credential = user.walletPublicKey ? await getCredential(user.walletPublicKey) : null;
 
-  return <DashboardClient user={user} activity={activity} verification={verification} />;
+  // The currently-configured contract, not whatever's stored on the
+  // Credential row — if the contract is ever redeployed again, this keeps
+  // the Snowtrace link pointed at the live contract rather than a value
+  // frozen at mint time.
+  const credentialContractAddress = process.env.STUDENT_CREDENTIAL_REGISTRY_ADDRESS ?? null;
+
+  return (
+    <DashboardClient
+      user={user}
+      activity={activity}
+      verification={verification}
+      credential={credential}
+      credentialContractAddress={credentialContractAddress}
+    />
+  );
 }

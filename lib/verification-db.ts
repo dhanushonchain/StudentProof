@@ -141,3 +141,31 @@ export async function getLatestVerification(walletAddress: string): Promise<Veri
 
   return record ? toDTO(record) : null;
 }
+
+export type CredentialDTO = {
+  contractAddress: string;
+  tokenId: string;
+  status: string;
+  issuedAt: string;
+};
+
+// Most recent active credential for a user, if any — the dashboard uses this
+// to render the actual NFT (image, name, issue date) instead of just a
+// generic "verified" success message.
+export async function getCredential(walletAddress: string): Promise<CredentialDTO | null> {
+  const user = await prisma.user.findUnique({ where: { walletAddress } });
+  if (!user) return null;
+
+  const credential = await prisma.credential.findFirst({
+    where: { userId: user.id },
+    orderBy: { issuedAt: "desc" },
+  });
+  if (!credential) return null;
+
+  return {
+    contractAddress: credential.contractAddress,
+    tokenId: credential.tokenId,
+    status: credential.status,
+    issuedAt: credential.issuedAt.toISOString(),
+  };
+}
