@@ -16,33 +16,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.loginAt = new Date().toISOString();
 
         // If walletPublicKey is not in the token, this is the first login (or wallet was never created)
-        let walletFunded = false;
         if (!token.walletPublicKey) {
           // Lazy-import server-only wallet handler
           const { createWalletForNewUser } = await import("@/lib/auth-wallet");
-          const { publicKey, funded } = await createWalletForNewUser(googleSub);
+          const { publicKey } = await createWalletForNewUser(googleSub);
           console.log("[Wallet] Created wallet for user", googleSub, "public key:", publicKey);
           token.walletPublicKey = publicKey;
           token.googleSub = googleSub;
-          walletFunded = funded;
         } else {
           console.log("[Wallet] Wallet already exists for user, public key:", token.walletPublicKey);
         }
 
         // Lazy-import server-only DB handler — same Edge-safety reasoning as the wallet import above
         const { logSignIn } = await import("@/lib/activity-db");
-        await logSignIn({
+        const { isNewUser } = await logSignIn({
           googleSub,
           email: profile.email ?? "",
           walletAddress: token.walletPublicKey as string,
-          walletFunded,
         });
 
-        // Genuinely new account (wallet was just funded, not a repeat sign-in) — send the
-        // welcome email. Scheduled via after() so it can't slow down or fail sign-in: it
-        // runs once the response is on its way out, and errors are caught inside the
-        // function itself, never propagating back here.
-        if (walletFunded && profile.email) {
+        // Genuinely new account (not a repeat sign-in) — send the welcome email.
+        // Scheduled via after() so it can't slow down or fail sign-in: it runs
+        // once the response is on its way out, and errors are caught inside
+        // the function itself, never propagating back here.
+        if (isNewUser && profile.email) {
           const email = profile.email;
           after(async () => {
             const { sendWelcomeEmail } = await import("@/lib/welcome-email");

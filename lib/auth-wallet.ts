@@ -2,14 +2,14 @@
 // from auth.ts's jwt callback via lazy dynamic import, never from client.
 //
 // The dynamic import below is load-bearing: lib/wallet.ts pulls in Node's `crypto`
-// module and viem's Node-targeted account/transport code, neither of which is
+// module and viem's Node-targeted account code, neither of which is
 // Edge-Runtime-safe. Keeping the import inside this function (rather than a static
 // top-level import) keeps that dependency graph out of anything that gets bundled
 // for the Edge Runtime, e.g. middleware.ts via auth.config.ts.
 
-export async function createWalletForNewUser(googleSub: string): Promise<{ publicKey: string; funded: boolean }> {
+export async function createWalletForNewUser(googleSub: string): Promise<{ publicKey: string }> {
   // Lazy-import wallet module to keep it out of edge bundle analysis
-  const { getOrCreateWallet } = await import("./wallet");
-  const { publicKey, funded } = await getOrCreateWallet(googleSub, true);
-  return { publicKey, funded };
+  const { deriveAccount } = await import("./wallet");
+  const { account } = deriveAccount(googleSub);
+  return { publicKey: account.address };
 }

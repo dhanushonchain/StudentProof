@@ -13,37 +13,32 @@ export type ActivityEventDTO = {
 };
 
 // Called on every fresh sign-in. Creates the User row on first-ever login
-// (no-op update if it already exists), then logs a "login" event and, only
-// when a wallet was genuinely just funded (not a repeat sign-in where funding
-// was skipped), a "wallet_created" event.
+// (no-op if it already exists), then logs a "login" event and, only for a
+// genuinely new account (not a repeat sign-in), a "wallet_created" event.
 export async function logSignIn({
   googleSub,
   email,
   walletAddress,
-  walletFunded,
 }: {
   googleSub: string;
   email: string;
   walletAddress: string;
-  walletFunded: boolean;
 }) {
-  const user = await prisma.user.upsert({
-    where: { googleSub },
-    create: { googleSub, email, walletAddress },
-    update: {}, // user already exists — nothing to change
-  });
+  const existing = await prisma.user.findUnique({ where: { googleSub } });
+  const user = existing ?? (await prisma.user.create({ data: { googleSub, email, walletAddress } }));
+  const isNewUser = !existing;
 
   await prisma.activityEvent.create({
     data: { userId: user.id, eventType: "login" },
   });
 
-  if (walletFunded) {
+  if (isNewUser) {
     await prisma.activityEvent.create({
       data: { userId: user.id, eventType: "wallet_created" },
     });
   }
 
-  return user;
+  return { user, isNewUser };
 }
 
 // Called from /api/activity/logout right before signOut() runs client-side.

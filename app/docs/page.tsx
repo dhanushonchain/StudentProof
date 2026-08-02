@@ -386,9 +386,8 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                       { emoji: "👨‍🎓", title: "Student", desc: "Creates a StudentProof account." },
                       { emoji: "🔐", title: "Google Login", desc: "Student signs in using a personal Gmail account." },
                       { emoji: "👛", title: "Auto Wallet", desc: "An account abstraction wallet is created automatically." },
-                      { emoji: "🪪", title: "Student ID Upload", desc: "Student uploads their college ID." },
-                      { emoji: "🤖", title: "OCR Verification", desc: "EasyOCR extracts student information and verifies it against the seeded university database." },
-                      { emoji: "🎓", title: "Credential Issued", desc: "A reusable blockchain credential is issued to the student's wallet." },
+                      { emoji: "🔎", title: "Reclaim Verification", desc: "Student proves their enrollment by logging into their university portal — a zero-knowledge proof is generated, no screenshots or ID uploads involved." },
+                      { emoji: "🎓", title: "Credential Issued", desc: "A soulbound blockchain credential is issued to the student's wallet." },
                       { emoji: "🌍", title: "Third-Party Applications", desc: "Applications verify student status using the StudentProof SDK without requesting the original ID card." },
                     ].map((step, i, arr) => (
                       <div key={step.title} className="flex flex-col items-center w-full max-w-sm">
@@ -414,8 +413,8 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                   {[
                     { title: "Google Authentication", desc: "Students authenticate using their personal Gmail account, eliminating the need for university-issued email addresses." },
                     { title: "Account Abstraction Wallet", desc: "Wallets are created automatically, allowing students to use blockchain without managing private keys." },
-                    { title: "OCR Verification Engine", desc: "Student IDs are processed using OCR and validated against seeded institutional records." },
-                    { title: "Blockchain Credential", desc: "Verified students receive a non-transferable credential that expires automatically after their education period ends." },
+                    { title: "Reclaim zkTLS Verification", desc: "Enrollment is proven directly from the university portal using zero-knowledge proofs, without ever exposing login credentials or personal data to StudentProof." },
+                    { title: "Blockchain Credential", desc: "Verified students receive a soulbound (non-transferable) credential that stays valid until explicitly revoked by the issuing authority." },
                   ].map((item) => (
                     <div key={item.title} className={card} style={cardStyle}>
                       <h3 style={h3Style}>{item.title}</h3>
@@ -488,7 +487,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 {/* Tech Stack */}
                 <h2 style={h2Style}>Technology Stack</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["Next.js", "React", "Tailwind CSS", "TypeScript", "Python", "EasyOCR", "OpenCV", "Avalanche C-Chain", "viem", "PostgreSQL", "Google OAuth", "Node.js"].map((tech) => (
+                  {["Next.js", "React", "Tailwind CSS", "TypeScript", "Reclaim Protocol", "Solidity", "Avalanche C-Chain", "viem", "PostgreSQL", "Prisma", "Google OAuth", "Node.js"].map((tech) => (
                     <div
                       key={tech}
                       className="rounded-xl py-4 text-center text-sm transition-all duration-200"
@@ -518,7 +517,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                     { question: "Why use blockchain?", answer: "Blockchain creates tamper-resistant, wallet-bound credentials that can be independently verified by third parties without relying on StudentProof as a central authority after issuance." },
                     { question: "Does StudentProof store my student ID?", answer: "No. StudentProof minimizes exposure of personal information. Verification happens once, after which only the credential is reused." },
                     { question: "Can organizations verify students instantly?", answer: "Yes. Applications integrate the StudentProof SDK to instantly check whether a wallet belongs to a verified student without requesting another ID upload." },
-                    { question: "Do credentials expire?", answer: "Yes. Student credentials have an expiry date based on the student's education period. Once expired, applications will no longer treat the credential as valid." },
+                    { question: "Do credentials expire?", answer: "No, not automatically. Credentials are soulbound and remain valid until explicitly revoked by the issuing authority — for example if a student's enrollment status changes." },
                     { question: "Can any university use StudentProof?", answer: "Yes. Institutions only need to provide student records for verification. They do not need to maintain their own verification servers or issue student email accounts." },
                   ].map((faq, index) => (
                     <div
