@@ -42,13 +42,13 @@ export default function DashboardClient({
   user,
   activity,
   verification: initialVerification,
-  credential,
+  credentials,
   credentialContractAddress,
 }: {
   user: DashboardUser;
   activity: ActivityEventDTO[];
   verification: VerificationDTO | null;
-  credential: CredentialDTO | null;
+  credentials: CredentialDTO[];
   credentialContractAddress: string | null;
 }) {
   const [activeSection, setActiveSection] = useState<DashSection | null>("home");
@@ -124,7 +124,7 @@ export default function DashboardClient({
           user={user}
           activity={activity}
           verification={verification}
-          credential={credential}
+          credentials={credentials}
           credentialContractAddress={credentialContractAddress}
           pollTimedOut={pollTimedOut}
           onStartVerification={startVerification}
@@ -152,7 +152,7 @@ function DashboardModal({
   user,
   activity,
   verification,
-  credential,
+  credentials,
   credentialContractAddress,
   pollTimedOut,
   onStartVerification,
@@ -164,7 +164,7 @@ function DashboardModal({
   user: DashboardUser;
   activity: ActivityEventDTO[];
   verification: VerificationDTO | null;
-  credential: CredentialDTO | null;
+  credentials: CredentialDTO[];
   credentialContractAddress: string | null;
   pollTimedOut: boolean;
   onStartVerification: () => void;
@@ -196,7 +196,7 @@ function DashboardModal({
             <HomeSection
               user={user}
               verification={verification}
-              credential={credential}
+              credentials={credentials}
               credentialContractAddress={credentialContractAddress}
               pollTimedOut={pollTimedOut}
               onStartVerification={onStartVerification}
@@ -215,7 +215,7 @@ function DashboardModal({
 function HomeSection({
   user,
   verification,
-  credential,
+  credentials,
   credentialContractAddress,
   pollTimedOut,
   onStartVerification,
@@ -223,7 +223,7 @@ function HomeSection({
 }: {
   user: DashboardUser;
   verification: VerificationDTO | null;
-  credential: CredentialDTO | null;
+  credentials: CredentialDTO[];
   credentialContractAddress: string | null;
   pollTimedOut: boolean;
   onStartVerification: () => void;
@@ -244,7 +244,7 @@ function HomeSection({
         <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
           <div className="w-full">
             {verification?.status === "verified" ? (
-              <CredentialCard credential={credential} contractAddress={credentialContractAddress} />
+              <CredentialCard credential={credentials[0] ?? null} contractAddress={credentialContractAddress} />
             ) : verification?.status === "pending" ? (
               <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
             ) : (
@@ -421,12 +421,25 @@ function CredentialCard({
     contractAddress && credential.tokenId
       ? `https://testnet.snowtrace.io/nft/${contractAddress}/${credential.tokenId}?chainid=43113&type=erc721`
       : null;
-  const issuedDate = new Date(credential.issuedAt).toLocaleDateString("en-IN", {
+  const dateFormat: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
     year: "numeric",
     timeZone: "Asia/Kolkata",
-  });
+  };
+  const issuedDate = new Date(credential.issuedAt).toLocaleDateString("en-IN", dateFormat);
+  const expiresDate = new Date(credential.expiresAt).toLocaleDateString("en-IN", dateFormat);
+
+  const statusStyles: Record<CredentialDTO["status"], string> = {
+    active: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+    expired: "border-zinc-500/30 bg-zinc-500/10 text-zinc-400",
+    revoked: "border-red-500/30 bg-red-500/10 text-red-400",
+  };
+  const statusLabel: Record<CredentialDTO["status"], string> = {
+    active: "Active",
+    expired: "Expired",
+    revoked: "Revoked",
+  };
 
   return (
     <section className="flex flex-col items-center rounded-[2rem] border border-[#27272A] bg-[#111113] px-6 py-10 text-center sm:px-10">
@@ -437,9 +450,14 @@ function CredentialCard({
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
         <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Proof of Student</span>
+        <span className={cn("rounded-full border px-2.5 py-1 text-xs font-medium", statusStyles[credential.status])}>
+          {statusLabel[credential.status]}
+        </span>
       </div>
 
-      <p className="mt-2 text-sm text-zinc-500">Issued {issuedDate}</p>
+      <p className="mt-2 text-sm text-zinc-500">
+        Issued {issuedDate} · Expires {expiresDate}
+      </p>
 
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <ActionButton icon={ExternalLink} quiet href={snowtraceUrl ?? undefined} disabled={!snowtraceUrl}>

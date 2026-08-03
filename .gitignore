@@ -45,3 +45,4 @@ AGENTS.md
 CLAUDE.md   
 /lib/generated/prisma
 .mcp.json
+.env

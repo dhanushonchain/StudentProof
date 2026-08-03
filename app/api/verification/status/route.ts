@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
   if (verification?.status === "pending" && sessionId) {
     try {
       const { fetchStatusUrl, verifyProof } = await import("@reclaimprotocol/js-sdk");
-      const { SAMARTH_PROVIDER_ID } = await import("@/lib/reclaim");
+      const { SAMARTH_PROVIDER_ID, extractProgrammeInfo } = await import("@/lib/reclaim");
+      const { UnknownProgrammeCodeError, UnknownAdmissionCycleError } = await import("@/lib/programme-expiry");
 
       const statusResult = await fetchStatusUrl(sessionId);
       const statusV2 = statusResult.session?.statusV2;
@@ -50,9 +51,21 @@ export async function GET(req: NextRequest) {
       // valid signed proof already attached) was never recognized as done.
       if (proofs?.length) {
         const result = await verifyProof(proofs.length === 1 ? proofs[0] : proofs, { providerId: SAMARTH_PROVIDER_ID });
-        verification = result.isVerified
-          ? await markVerified(verification.id, proofs[0].identifier)
-          : await markFailed(verification.id);
+        if (result.isVerified) {
+          const programmeInfo = extractProgrammeInfo(proofs[0]);
+          try {
+            verification = await markVerified(verification.id, proofs[0].identifier, programmeInfo);
+          } catch (error) {
+            if (error instanceof UnknownProgrammeCodeError || error instanceof UnknownAdmissionCycleError) {
+              console.error("[Verification] Cannot compute credential expiry:", error.message);
+              verification = await markFailed(verification.id);
+            } else {
+              throw error;
+            }
+          }
+        } else {
+          verification = await markFailed(verification.id);
+        }
       } else if (statusV2 && TERMINAL_FAILURE_STATUSES.has(statusV2)) {
         verification = await markFailed(verification.id);
       }

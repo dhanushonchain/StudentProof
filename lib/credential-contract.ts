@@ -18,6 +18,7 @@ const STUDENT_CREDENTIAL_REGISTRY_ABI = [
     inputs: [
       { name: "student", type: "address" },
       { name: "providerId", type: "string" },
+      { name: "expiresAt", type: "uint256" },
     ],
     outputs: [{ name: "", type: "uint256" }],
   },
@@ -36,6 +37,7 @@ const STUDENT_CREDENTIAL_REGISTRY_ABI = [
       { name: "tokenId", type: "uint256", indexed: true },
       { name: "providerId", type: "string", indexed: false },
       { name: "issuedAt", type: "uint256", indexed: false },
+      { name: "expiresAt", type: "uint256", indexed: false },
     ],
   },
 ] as const;
@@ -45,9 +47,11 @@ const publicClient = createPublicClient({ chain: avalancheFuji, transport: http(
 export async function mintStudentCredential({
   studentAddress,
   providerId,
+  expiresAt,
 }: {
   studentAddress: Address;
   providerId: string;
+  expiresAt: Date;
 }): Promise<{ contractAddress: Address; tokenId: string; transactionHash: Hex }> {
   if (!STUDENT_CREDENTIAL_REGISTRY_ADDRESS) {
     throw new Error("STUDENT_CREDENTIAL_REGISTRY_ADDRESS environment variable is not set");
@@ -55,6 +59,9 @@ export async function mintStudentCredential({
   if (!MINTER_PRIVATE_KEY) {
     throw new Error("MINTER_PRIVATE_KEY environment variable is not set");
   }
+
+  // Contract stores expiresAt as a Unix timestamp in seconds, not milliseconds.
+  const expiresAtSeconds = BigInt(Math.floor(expiresAt.getTime() / 1000));
 
   const minterAccount = privateKeyToAccount(MINTER_PRIVATE_KEY);
   const walletClient = createWalletClient({ account: minterAccount, chain: avalancheFuji, transport: http(RPC_URL) });
@@ -71,19 +78,19 @@ export async function mintStudentCredential({
     address: STUDENT_CREDENTIAL_REGISTRY_ADDRESS,
     abi: STUDENT_CREDENTIAL_REGISTRY_ABI,
     functionName: "mintCredential",
-    args: [studentAddress, providerId],
+    args: [studentAddress, providerId, expiresAtSeconds],
     account: minterAccount.address,
     type: "legacy",
   });
   const gas = (estimatedGas * BigInt(120)) / BigInt(100);
 
-  // Simulate first so an obviously-doomed call (e.g. a duplicate mint from a
-  // race) reverts cheaply here instead of burning gas on a real transaction.
+  // Simulate first so an obviously-doomed call reverts cheaply here instead
+  // of burning gas on a real transaction.
   const { request } = await publicClient.simulateContract({
     address: STUDENT_CREDENTIAL_REGISTRY_ADDRESS,
     abi: STUDENT_CREDENTIAL_REGISTRY_ABI,
     functionName: "mintCredential",
-    args: [studentAddress, providerId],
+    args: [studentAddress, providerId, expiresAtSeconds],
     account: minterAccount,
     gas,
   });

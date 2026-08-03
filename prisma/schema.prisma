@@ -48,4 +48,9 @@ model Credential {
   tokenId         String
   status          String   // "active" | "revoked"
   issuedAt        DateTime @default(now())
+  // Existing rows predate this column and get backfilled to now() — they're
+  // already-abandoned testnet data on prior contract addresses, so reading
+  // as immediately "expired" is accurate enough. Every row minted from here
+  // on always sets a real computed value explicitly (see markVerified).
+  expiresAt       DateTime @default(now())
 }

@@ -4,6 +4,7 @@
 // in the Prisma client's Node-only engine, which is not Edge-Runtime-safe.
 
 import { mintStudentCredential } from "./credential-contract";
+import { computeCredentialExpiry } from "./programme-expiry";
 import { prisma } from "./prisma";
 import type { Address } from "viem";
 
@@ -75,7 +76,30 @@ export async function setReclaimSessionId(verificationRecordId: string, sessionI
 // lands, so the DB write happens first and unconditionally. A mint failure
 // is logged loudly (never thrown) so it's visible and can be retried/
 // backfilled later, rather than silently corrupting a real verification.
-export async function markVerified(verificationRecordId: string, proofReference: string): Promise<VerificationDTO> {
+//
+// `programmeInfo` is populated from the SAMARTH provider's extracted
+// programmeCode/admissionCycle (see lib/reclaim.ts's extractProgrammeInfo).
+// It's used ONLY to compute expiresAt and is never itself logged, stored, or
+// passed any further — per StudentProof's privacy rules, only the derived
+// date is allowed to survive. Computed BEFORE the "verified" write below: an
+// unknown programme code/cycle must fail the verification cleanly (caller
+// should catch and call markFailed), not write "verified" and then have to
+// revert it.
+//
+// Minting requires expiresAt (the contract's mintCredential takes it as a
+// required argument), so without programmeInfo there is nothing valid to
+// mint — that case is logged clearly and skipped, not attempted with a
+// placeholder value.
+export async function markVerified(
+  verificationRecordId: string,
+  proofReference: string,
+  programmeInfo?: { programmeCode: string; admissionCycle: string }
+): Promise<VerificationDTO> {
+  let expiresAt: Date | undefined;
+  if (programmeInfo) {
+    expiresAt = computeCredentialExpiry(programmeInfo.programmeCode, programmeInfo.admissionCycle).expiresAt;
+  }
+
   const record = await prisma.verificationRecord.update({
     where: { id: verificationRecordId },
     data: { status: "verified", proofReference, verifiedAt: new Date() },
@@ -85,15 +109,27 @@ export async function markVerified(verificationRecordId: string, proofReference:
     data: { userId: record.userId, eventType: "verification_completed" },
   });
 
+  if (!expiresAt) {
+    console.error(
+      "[Credential] No programme info available for verification",
+      verificationRecordId,
+      "(user",
+      record.userId,
+      ") — cannot compute expiresAt, skipping mint. Verification status is unaffected."
+    );
+    return toDTO(record);
+  }
+
   try {
     const user = await prisma.user.findUniqueOrThrow({ where: { id: record.userId } });
     const { contractAddress, tokenId, transactionHash } = await mintStudentCredential({
       studentAddress: user.walletAddress as Address,
       providerId: "reclaim",
+      expiresAt,
     });
 
     await prisma.credential.create({
-      data: { userId: record.userId, contractAddress, tokenId, status: "active" },
+      data: { userId: record.userId, contractAddress, tokenId, status: "active", expiresAt },
     });
 
     console.log(
@@ -101,6 +137,8 @@ export async function markVerified(verificationRecordId: string, proofReference:
       record.userId,
       "tokenId:",
       tokenId,
+      "expiresAt:",
+      expiresAt.toISOString(),
       "tx:",
       transactionHash
     );
@@ -145,27 +183,45 @@ export async function getLatestVerification(walletAddress: string): Promise<Veri
 export type CredentialDTO = {
   contractAddress: string;
   tokenId: string;
-  status: string;
   issuedAt: string;
+  expiresAt: string;
+  // Computed at read time from the stored "active"/"revoked" status plus a
+  // live comparison of expiresAt against now — natural expiry is never
+  // written back to the DB, so this needs no background job to stay correct.
+  status: "active" | "expired" | "revoked";
 };
 
-// Most recent active credential for a user, if any — the dashboard uses this
-// to render the actual NFT (image, name, issue date) instead of just a
-// generic "verified" success message.
-export async function getCredential(walletAddress: string): Promise<CredentialDTO | null> {
-  const user = await prisma.user.findUnique({ where: { walletAddress } });
-  if (!user) return null;
-
-  const credential = await prisma.credential.findFirst({
-    where: { userId: user.id },
-    orderBy: { issuedAt: "desc" },
-  });
-  if (!credential) return null;
+function toCredentialDTO(credential: {
+  contractAddress: string;
+  tokenId: string;
+  status: string;
+  issuedAt: Date;
+  expiresAt: Date;
+}): CredentialDTO {
+  const status = credential.status === "revoked" ? "revoked" : credential.expiresAt <= new Date() ? "expired" : "active";
 
   return {
     contractAddress: credential.contractAddress,
     tokenId: credential.tokenId,
-    status: credential.status,
     issuedAt: credential.issuedAt.toISOString(),
+    expiresAt: credential.expiresAt.toISOString(),
+    status,
   };
+}
+
+// Every credential a user has ever been issued, most recently issued first —
+// a wallet can hold several (e.g. BSc, later MSc), each an independent,
+// permanent record. Callers that only need a single card (today's dashboard)
+// can just take the first element; the array is here so a future multi-
+// credential UI can render the rest without any backend changes.
+export async function getCredentials(walletAddress: string): Promise<CredentialDTO[]> {
+  const user = await prisma.user.findUnique({ where: { walletAddress } });
+  if (!user) return [];
+
+  const credentials = await prisma.credential.findMany({
+    where: { userId: user.id },
+    orderBy: { issuedAt: "desc" },
+  });
+
+  return credentials.map(toCredentialDTO);
 }

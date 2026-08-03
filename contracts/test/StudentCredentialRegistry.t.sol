@@ -17,7 +17,11 @@ contract StudentCredentialRegistryTest is Test {
     address student = address(0x57DEA7);
     address anotherStudent = address(0x57DEA7B);
 
+    uint256 farFuture;
+
     function setUp() public {
+        farFuture = block.timestamp + 365 days;
+
         vm.startPrank(owner);
         registry = new VerificationProviderRegistry();
         registry.addProvider("reclaim", "Reclaim Protocol");
@@ -33,21 +37,23 @@ contract StudentCredentialRegistryTest is Test {
 
     function test_minterCanMintForTrustedProvider() public {
         vm.prank(minter);
-        uint256 tokenId = credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         assertEq(tokenId, 1);
         assertTrue(credential.hasValidCredential(student));
         assertEq(credential.ownerOf(tokenId), student);
         assertEq(credential.balanceOf(student), 1);
 
-        StudentCredentialRegistry.CredentialData memory data = credential.credentialOf(student);
+        StudentCredentialRegistry.CredentialData memory data = credential.credentialData(tokenId);
         assertEq(data.providerId, "reclaim");
         assertEq(data.issuedAt, block.timestamp);
+        assertEq(data.expiresAt, farFuture);
+        assertFalse(data.revoked);
     }
 
     function test_tokenURIReturnsBase64JsonWithImage() public {
         vm.prank(minter);
-        uint256 tokenId = credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         string memory uri = credential.tokenURI(tokenId);
         assertTrue(_startsWith(uri, "data:application/json;base64,"));
@@ -71,35 +77,40 @@ contract StudentCredentialRegistryTest is Test {
     function test_strangerCannotMint() public {
         vm.prank(stranger);
         vm.expectRevert(StudentCredentialRegistry.NotAuthorizedMinter.selector);
-        credential.mintCredential(student, "reclaim");
+        credential.mintCredential(student, "reclaim", farFuture);
     }
 
     function test_ownerCannotMintEither() public {
         // Only the authorizedMinter can mint — being contract owner is not enough.
         vm.prank(owner);
         vm.expectRevert(StudentCredentialRegistry.NotAuthorizedMinter.selector);
-        credential.mintCredential(student, "reclaim");
+        credential.mintCredential(student, "reclaim", farFuture);
     }
 
     function test_cannotMintForUntrustedProvider() public {
         vm.prank(minter);
         vm.expectRevert(abi.encodeWithSelector(StudentCredentialRegistry.ProviderNotTrusted.selector, "fakeprovider"));
-        credential.mintCredential(student, "fakeprovider");
+        credential.mintCredential(student, "fakeprovider", farFuture);
     }
 
-    function test_cannotMintDuplicateForSameWallet() public {
+    // Duplicate-credential prevention was deliberately dropped for MVP scope
+    // (see the contract's top-level NatSpec) — a wallet minting for the same
+    // provider twice is now expected, supported behavior, not an error.
+    function test_walletCanMintMultipleCredentials() public {
         vm.startPrank(minter);
-        credential.mintCredential(student, "reclaim");
-
-        vm.expectRevert(abi.encodeWithSelector(StudentCredentialRegistry.CredentialAlreadyIssued.selector, student));
-        credential.mintCredential(student, "reclaim");
+        uint256 first = credential.mintCredential(student, "reclaim", farFuture);
+        uint256 second = credential.mintCredential(student, "reclaim", farFuture);
         vm.stopPrank();
+
+        assertTrue(first != second);
+        assertEq(credential.balanceOf(student), 2);
+        assertTrue(credential.hasValidCredential(student));
     }
 
     function test_differentWalletsGetDifferentTokenIds() public {
         vm.startPrank(minter);
-        uint256 first = credential.mintCredential(student, "reclaim");
-        uint256 second = credential.mintCredential(anotherStudent, "reclaim");
+        uint256 first = credential.mintCredential(student, "reclaim", farFuture);
+        uint256 second = credential.mintCredential(anotherStudent, "reclaim", farFuture);
         vm.stopPrank();
 
         assertTrue(first != second);
@@ -111,9 +122,35 @@ contract StudentCredentialRegistryTest is Test {
         assertFalse(credential.hasValidCredential(student));
     }
 
+    function test_hasValidCredentialFalseWhenExpired() public {
+        uint256 expiresAt = block.timestamp + 1 days;
+        vm.prank(minter);
+        credential.mintCredential(student, "reclaim", expiresAt);
+
+        assertTrue(credential.hasValidCredential(student));
+
+        vm.warp(expiresAt + 1);
+        assertFalse(credential.hasValidCredential(student));
+        // Still on-chain, still owned — just no longer "valid".
+        assertEq(credential.balanceOf(student), 1);
+    }
+
+    function test_hasValidCredentialTrueWhenOneOfSeveralStillActive() public {
+        uint256 soonExpires = block.timestamp + 1 days;
+
+        vm.startPrank(minter);
+        credential.mintCredential(student, "reclaim", soonExpires); // will expire
+        credential.mintCredential(student, "reclaim", farFuture); // stays active
+        vm.stopPrank();
+
+        vm.warp(soonExpires + 1);
+        assertTrue(credential.hasValidCredential(student));
+        assertEq(credential.balanceOf(student), 2);
+    }
+
     function test_transferReverts() public {
         vm.prank(minter);
-        uint256 tokenId = credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         vm.prank(student);
         vm.expectRevert(StudentCredentialRegistry.CredentialTransfersDisabled.selector);
@@ -122,7 +159,7 @@ contract StudentCredentialRegistryTest is Test {
 
     function test_safeTransferReverts() public {
         vm.prank(minter);
-        uint256 tokenId = credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         vm.prank(student);
         vm.expectRevert(StudentCredentialRegistry.CredentialTransfersDisabled.selector);
@@ -131,7 +168,7 @@ contract StudentCredentialRegistryTest is Test {
 
     function test_approveReverts() public {
         vm.prank(minter);
-        uint256 tokenId = credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         vm.prank(student);
         vm.expectRevert(StudentCredentialRegistry.CredentialTransfersDisabled.selector);
@@ -146,30 +183,42 @@ contract StudentCredentialRegistryTest is Test {
 
     function test_ownerCanRevokeCredential() public {
         vm.prank(minter);
-        credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
         assertTrue(credential.hasValidCredential(student));
 
         vm.prank(owner);
-        credential.revokeCredential(student);
+        credential.revokeCredential(tokenId);
 
         assertFalse(credential.hasValidCredential(student));
+        assertTrue(credential.credentialData(tokenId).revoked);
         // The token itself still exists on-chain (soft revoke, not a burn).
         assertEq(credential.balanceOf(student), 1);
     }
 
+    function test_revokedCredentialInvalidEvenIfNotExpired() public {
+        vm.prank(minter);
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
+
+        vm.prank(owner);
+        credential.revokeCredential(tokenId);
+
+        // Far from expired, but revoked — must not count as valid.
+        assertFalse(credential.hasValidCredential(student));
+    }
+
     function test_strangerCannotRevoke() public {
         vm.prank(minter);
-        credential.mintCredential(student, "reclaim");
+        uint256 tokenId = credential.mintCredential(student, "reclaim", farFuture);
 
         vm.prank(stranger);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
-        credential.revokeCredential(student);
+        credential.revokeCredential(tokenId);
     }
 
     function test_revokeWithNoCredentialReverts() public {
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(StudentCredentialRegistry.NoCredential.selector, student));
-        credential.revokeCredential(student);
+        vm.expectRevert(abi.encodeWithSelector(StudentCredentialRegistry.NoCredential.selector, 999));
+        credential.revokeCredential(999);
     }
 
     function test_ownerCanRotateMinter() public {
@@ -182,11 +231,11 @@ contract StudentCredentialRegistryTest is Test {
         // Old minter is no longer authorized.
         vm.prank(minter);
         vm.expectRevert(StudentCredentialRegistry.NotAuthorizedMinter.selector);
-        credential.mintCredential(student, "reclaim");
+        credential.mintCredential(student, "reclaim", farFuture);
 
         // New minter works.
         vm.prank(newMinter);
-        credential.mintCredential(student, "reclaim");
+        credential.mintCredential(student, "reclaim", farFuture);
         assertTrue(credential.hasValidCredential(student));
     }
 
@@ -194,5 +243,40 @@ contract StudentCredentialRegistryTest is Test {
         vm.prank(stranger);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
         credential.setAuthorizedMinter(stranger);
+    }
+
+    function test_getCredentialsByOwnerReturnsAllWithMatchingTokenIds() public {
+        vm.startPrank(minter);
+        uint256 first = credential.mintCredential(student, "reclaim", farFuture);
+        uint256 second = credential.mintCredential(student, "reclaim", farFuture + 1);
+        vm.stopPrank();
+
+        (uint256[] memory tokenIds, StudentCredentialRegistry.CredentialData[] memory credentials) =
+            credential.getCredentialsByOwner(student);
+
+        assertEq(tokenIds.length, 2);
+        assertEq(credentials.length, 2);
+        assertEq(tokenIds[0], first);
+        assertEq(tokenIds[1], second);
+        assertEq(credentials[0].expiresAt, farFuture);
+        assertEq(credentials[1].expiresAt, farFuture + 1);
+    }
+
+    function test_getCredentialsByOwnerEmptyForNeverMinted() public view {
+        (uint256[] memory tokenIds, StudentCredentialRegistry.CredentialData[] memory credentials) =
+            credential.getCredentialsByOwner(student);
+        assertEq(tokenIds.length, 0);
+        assertEq(credentials.length, 0);
+    }
+
+    function test_enumerableTotalSupplyAndTokenByIndex() public {
+        vm.startPrank(minter);
+        credential.mintCredential(student, "reclaim", farFuture);
+        credential.mintCredential(anotherStudent, "reclaim", farFuture);
+        vm.stopPrank();
+
+        assertEq(credential.totalSupply(), 2);
+        assertEq(credential.tokenByIndex(0), 1);
+        assertEq(credential.tokenByIndex(1), 2);
     }
 }
