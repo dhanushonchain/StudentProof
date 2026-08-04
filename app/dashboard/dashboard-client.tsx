@@ -55,6 +55,7 @@ export default function DashboardClient({
   const [verification, setVerification] = useState<VerificationDTO | null>(initialVerification);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pollTimedOut, setPollTimedOut] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const checkVerificationStatus = useCallback(async () => {
     try {
@@ -96,23 +97,34 @@ export default function DashboardClient({
   }, [verification?.id, verification?.status, checkVerificationStatus]);
 
   const startVerification = useCallback(async () => {
-    const res = await fetch("/api/verification/start", { method: "POST" });
-    if (!res.ok) {
-      console.error("Failed to start verification");
-      return;
+    // Guards against a double-click (or a fast double-tap on "try again")
+    // firing two overlapping POSTs — each would create its own
+    // VerificationRecord + Reclaim session, and only one of those sessions is
+    // the tab the user actually completes, leaving the other as a stray
+    // "pending"/"failed" row that can outrank the real one by createdAt.
+    if (starting) return;
+    setStarting(true);
+    try {
+      const res = await fetch("/api/verification/start", { method: "POST" });
+      if (!res.ok) {
+        console.error("Failed to start verification");
+        return;
+      }
+      const data = await res.json();
+      window.open(data.requestUrl, "_blank", "noopener,noreferrer");
+      setSessionId(data.sessionId ?? null);
+      setVerification({
+        id: data.verificationId,
+        status: "pending",
+        proofReference: null,
+        reclaimSessionId: data.sessionId ?? null,
+        verifiedAt: null,
+        createdAt: new Date().toISOString(),
+      });
+    } finally {
+      setStarting(false);
     }
-    const data = await res.json();
-    window.open(data.requestUrl, "_blank", "noopener,noreferrer");
-    setSessionId(data.sessionId ?? null);
-    setVerification({
-      id: data.verificationId,
-      status: "pending",
-      proofReference: null,
-      reclaimSessionId: data.sessionId ?? null,
-      verifiedAt: null,
-      createdAt: new Date().toISOString(),
-    });
-  }, []);
+  }, [starting]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#09090B] text-white antialiased">
@@ -243,7 +255,12 @@ function HomeSection({
 
         <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
           <div className="w-full">
-            {verification?.status === "verified" ? (
+            {/* Gate on actually holding a credential, not the latest
+                VerificationRecord's status — that row can be a stray/failed
+                duplicate session (e.g. a double-submitted "Verify" click)
+                even when an earlier attempt in the same batch succeeded and
+                already minted. */}
+            {credentials.some((c) => c.status === "active") ? (
               <CredentialCard credential={credentials[0] ?? null} contractAddress={credentialContractAddress} />
             ) : verification?.status === "pending" ? (
               <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
@@ -529,6 +546,32 @@ function EmptyState({ onVerify }: { onVerify: () => void }) {
       <p className="mx-auto mt-5 max-w-lg leading-7 text-zinc-400">
         Verify once using Reclaim Protocol and securely reuse your credential across supported applications.
       </p>
+      <ol className="mx-auto mt-6 max-w-md space-y-3 text-left text-sm leading-6 text-zinc-400">
+        <li className="flex gap-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1c1f] text-xs font-medium text-[#E1E0CC]">
+            1
+          </span>
+          <span>
+            A new tab opens to SAMARTH — log in with your Enrolment Number and password.
+          </span>
+        </li>
+        <li className="flex gap-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1c1f] text-xs font-medium text-[#E1E0CC]">
+            2
+          </span>
+          <span>
+            On the SAMARTH Dashboard, find your programme card and click <strong className="text-zinc-200">CLICK HERE</strong>.
+          </span>
+        </li>
+        <li className="flex gap-3">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1c1f] text-xs font-medium text-[#E1E0CC]">
+            3
+          </span>
+          <span>
+            Stay on the Programme Details page that loads — don&apos;t navigate away. Verification captures automatically within a few seconds.
+          </span>
+        </li>
+      </ol>
       <Button
         onClick={onVerify}
         className="mt-8 h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb]"
