@@ -14,16 +14,17 @@ export const RECLAIM_APP_ID = appId;
 export const RECLAIM_APP_SECRET = appSecret;
 
 // Published Reclaim provider for Mumbai University's SAMARTH portal —
-// "samarth-programme-details-dynamic". Proves Enrollment Number (OPRF-raw
-// hashed, same mechanism as the prior enrollment-only provider), Programme
+// "samarth-main". Proves Enrollment Number (OPRF-raw hashed), Programme
 // Code, and Admission Year-Cycle, all from the student's own Programme
 // Details page, with no hardcoded prg_id (URL matched by a structural regex
-// so it works for any student). Validated end-to-end via Reclaim's Try Demo
-// tool: real SAMARTH login, real navigation, all three fields extracted
-// correctly. Supersedes the earlier enrollment-only provider
-// (c731294f-7ac7-4083-8609-7c3785a883e1), which only proved enrolmentnumber
-// and cannot support expiresAt computation.
-export const SAMARTH_PROVIDER_ID = "689e7061-2c93-4fd7-a773-7c485c34bb9f";
+// so it works for any student). Proven end-to-end via a real zkTLS run_proof
+// against a real production login (login -> dashboard "CLICK HERE" ->
+// Programme Details page), auth-bound (confirmed a cookie-less replay
+// 302-redirects rather than serving data). Supersedes
+// samarth-programme-details-dynamic (689e7061-2c93-4fd7-a773-7c485c34bb9f)
+// and the earlier enrollment-only provider
+// (c731294f-7ac7-4083-8609-7c3785a883e1).
+export const SAMARTH_PROVIDER_ID = "b56fb3c1-4bef-4150-81c0-0d2309f05e7c";
 
 // The real extracted field values live in claimData.parameters (a JSON
 // string) -> .paramValues, NOT claimData.context (that field is reserved for
