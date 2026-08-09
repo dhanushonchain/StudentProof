@@ -17,20 +17,20 @@ const docsPlaceholders = {
     body: "Full SDK guides, installation, and examples will be added here.",
     sidebarItem: "SDK Placeholder",
   },
-  "/api": {
-    label: "API",
-    heading: "API documentation placeholder",
-    body: "Endpoint references and authentication guides will be added here.",
-    sidebarItem: "API Placeholder",
+  "/pricing": {
+    label: "Pricing",
+    heading: "Free during beta",
+    body: "StudentProof is free to use while the platform is in active development. Institutional and enterprise pricing will be announced once the platform is production-ready.",
+    sidebarItem: "Pricing",
   },
 } as const;
 
-const PlaceholderDocsContent = ({
+export const PlaceholderDocsContent = ({
   page,
   modal = false,
   onClose,
 }: {
-  page: "/sdk" | "/api";
+  page: "/sdk" | "/pricing";
   modal?: boolean;
   onClose?: () => void;
 }) => {

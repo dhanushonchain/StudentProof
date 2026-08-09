@@ -91,14 +91,14 @@ export const WordsPullUpMultiStyle = ({ segments, className = "", style }: Words
 const navItems = [
   { label: "DOCS", href: "/docs" },
   { label: "SDK", href: "/sdk" },
-  { label: "API", href: "/api" },
+  { label: "PRICING", href: "/pricing" },
   { label: "GitHub", href: "https://github.com/dhanush-devx/StudentProof.git" },
 ];
 
 const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
-  const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/api">("/docs");
+  const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/pricing">("/docs");
 
   return (
     <>
@@ -140,7 +140,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                   </Link>
                 )}
                 {navItems.map((item) => {
-                  const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/api";
+                  const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/pricing";
 
                   if (isDocsSurface) {
                     return (
@@ -148,7 +148,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                         key={item.label}
                         type="button"
                         onClick={() => {
-                          setDocsInitialPath(item.href as "/docs" | "/sdk" | "/api");
+                          setDocsInitialPath(item.href as "/docs" | "/sdk" | "/pricing");
                           setShowDocs(true);
                         }}
                         className="text-[10px] transition-colors sm:text-xs md:text-sm"

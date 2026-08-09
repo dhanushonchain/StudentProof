@@ -57,7 +57,9 @@ export async function GET(req: NextRequest) {
             verification = await markVerified(verification.id, proofs[0].identifier, programmeInfo);
           } catch (error) {
             if (error instanceof UnknownProgrammeCodeError || error instanceof UnknownAdmissionCycleError) {
-              console.error("[Verification] Cannot compute credential expiry:", error.message);
+              // error.message embeds the raw programme code/cycle — never
+              // log it (see the matching comment in the callback route).
+              console.error("[Verification] Cannot compute credential expiry:", error.name);
               verification = await markFailed(verification.id);
             } else {
               throw error;

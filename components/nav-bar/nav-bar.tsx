@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 
-export type AccessPath = "/docs" | "/sdk" | "/api";
+export type AccessPath = "/docs" | "/sdk" | "/pricing";
 
 const navItems = [
   { label: "DOCS", href: "/docs" },
   { label: "SDK", href: "/sdk" },
-  { label: "API", href: "/api" },
+  { label: "PRICING", href: "/pricing" },
   { label: "GitHub", href: "https://github.com/dhanush-devx/StudentProof.git" },
 ];
 

@@ -253,7 +253,7 @@ function HomeSection({
           </h1>
         </section>
 
-        <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center">
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-8 py-4">
           <div className="w-full">
             {/* Gate on actually holding a credential, not the latest
                 VerificationRecord's status — that row can be a stray/failed
@@ -261,7 +261,10 @@ function HomeSection({
                 even when an earlier attempt in the same batch succeeded and
                 already minted. */}
             {credentials.some((c) => c.status === "active") ? (
-              <CredentialCard credential={credentials[0] ?? null} contractAddress={credentialContractAddress} />
+              <CredentialCard
+                credential={credentials.find((c) => c.status === "active") ?? credentials[0]}
+                contractAddress={credentialContractAddress}
+              />
             ) : verification?.status === "pending" ? (
               <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
             ) : (
@@ -439,18 +442,18 @@ function CredentialCard({
       ? `https://testnet.snowtrace.io/nft/${contractAddress}/${credential.tokenId}?chainid=43113&type=erc721`
       : null;
   const dateFormat: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
     month: "short",
-    day: "numeric",
     year: "numeric",
     timeZone: "Asia/Kolkata",
   };
   const issuedDate = new Date(credential.issuedAt).toLocaleDateString("en-IN", dateFormat);
   const expiresDate = new Date(credential.expiresAt).toLocaleDateString("en-IN", dateFormat);
 
-  const statusStyles: Record<CredentialDTO["status"], string> = {
-    active: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-    expired: "border-zinc-500/30 bg-zinc-500/10 text-zinc-400",
-    revoked: "border-red-500/30 bg-red-500/10 text-red-400",
+  const statusDotColor: Record<CredentialDTO["status"], string> = {
+    active: "bg-emerald-500",
+    expired: "bg-zinc-500",
+    revoked: "bg-red-500",
   };
   const statusLabel: Record<CredentialDTO["status"], string> = {
     active: "Active",
@@ -459,81 +462,57 @@ function CredentialCard({
   };
 
   return (
-    <section className="flex flex-col items-center rounded-[2rem] border border-[#27272A] bg-[#111113] px-6 py-10 text-center sm:px-10">
-      <div className="h-64 w-64 sm:h-80 sm:w-80">
-        {/* eslint-disable-next-line @next/next/no-img-element -- external, contract-controlled URL */}
-        <img src={CREDENTIAL_IMAGE_URL} alt="Proof of Student credential artwork" className="h-full w-full object-cover" />
+    <section className="overflow-hidden rounded-[2rem] border border-[#27272A] bg-[#111113]">
+      <div className="flex flex-col items-center px-6 pb-2 pt-10 text-center sm:px-10">
+        <div className="h-48 w-48 overflow-hidden rounded-2xl sm:h-56 sm:w-56">
+          {/* eslint-disable-next-line @next/next/no-img-element -- external, contract-controlled URL */}
+          <img src={CREDENTIAL_IMAGE_URL} alt="Verified student credential artwork" className="h-full w-full object-cover" />
+        </div>
+        <span className="mt-6 text-xl font-semibold tracking-tight text-white">Verified Student</span>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Proof of Student</span>
-        <span className={cn("rounded-full border px-2.5 py-1 text-xs font-medium", statusStyles[credential.status])}>
-          {statusLabel[credential.status]}
-        </span>
-      </div>
-
-      <p className="mt-2 text-sm text-zinc-500">
-        Issued {issuedDate} · Expires {expiresDate}
-      </p>
-
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <ActionButton icon={ExternalLink} quiet href={snowtraceUrl ?? undefined} disabled={!snowtraceUrl}>
-          View on Blockchain(Snowtrace)
-        </ActionButton>
-      </div>
+      <dl className="divide-y divide-[#27272A] px-6 py-2 sm:px-10">
+        <CredentialRow label="Verified by" value="StudentProof" />
+        <CredentialRow label="Issued" value={issuedDate} />
+        <CredentialRow label="Expires" value={expiresDate} />
+        <CredentialRow
+          label="Status"
+          value={
+            <span className="flex items-center gap-1.5">
+              <span className={cn("h-2 w-2 rounded-full", statusDotColor[credential.status])} aria-hidden="true" />
+              {statusLabel[credential.status]}
+            </span>
+          }
+        />
+        <CredentialRow
+          label="Blockchain"
+          value={
+            snowtraceUrl ? (
+              <a
+                href={snowtraceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[#E1E0CC] hover:underline"
+              >
+                View on Snowtrace
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            ) : (
+              "Unavailable"
+            )
+          }
+        />
+      </dl>
     </section>
   );
 }
 
-function ActionButton({
-  children,
-  icon: Icon,
-  quiet = false,
-  href,
-  disabled = false,
-}: {
-  children: ReactNode;
-  icon: LucideIcon;
-  quiet?: boolean;
-  href?: string;
-  disabled?: boolean;
-}) {
-  const className = cn(
-    "h-11 rounded-2xl px-4 focus-visible:ring-[#E1E0CC]",
-    quiet
-      ? "border-[#27272A] bg-[#09090B] text-zinc-300 hover:bg-[#17171A] hover:text-white"
-      : "bg-[#E1E0CC] text-[#09090B] hover:bg-[#f0efdb]",
-    disabled && "pointer-events-none opacity-40"
-  );
-
-  if (disabled) {
-    return (
-      <Button type="button" disabled className={className} variant={quiet ? "outline" : "default"}>
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        {children}
-      </Button>
-    );
-  }
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(className, "inline-flex items-center justify-center gap-2 text-sm font-medium")}
-      >
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        {children}
-      </a>
-    );
-  }
-
+function CredentialRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Button type="button" className={className} variant={quiet ? "outline" : "default"}>
-      <Icon className="h-4 w-4" aria-hidden="true" />
-      {children}
-    </Button>
+    <div className="flex items-center justify-between gap-4 py-4">
+      <dt className="text-sm text-zinc-500">{label}</dt>
+      <dd className="text-right text-sm font-medium text-zinc-200">{value}</dd>
+    </div>
   );
 }
 

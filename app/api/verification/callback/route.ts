@@ -44,9 +44,13 @@ export async function POST(req: NextRequest) {
     await markVerified(verificationRecordId, proof.identifier, programmeInfo);
   } catch (error) {
     if (error instanceof UnknownProgrammeCodeError || error instanceof UnknownAdmissionCycleError) {
-      console.error("[Verification] Cannot compute credential expiry:", error.message);
+      // error.message embeds the raw programme code/cycle — never log or
+      // return it (privacy rule: no raw verification values survive past
+      // this point, not even in logs or API responses). error.name alone is
+      // enough to diagnose which case fired.
+      console.error("[Verification] Cannot compute credential expiry:", error.name);
       await markFailed(verificationRecordId);
-      return NextResponse.json({ verified: false, error: error.message }, { status: 400 });
+      return NextResponse.json({ verified: false, error: error.name }, { status: 400 });
     }
     throw error;
   }
