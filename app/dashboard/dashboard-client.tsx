@@ -9,6 +9,7 @@ import { MAX_ISSUANCE_ATTEMPTS } from "@/lib/issuance-policy";
 import {
   deriveVerificationUi,
   isValidDateString,
+  shouldKeepPolling,
   startErrorMessage,
   type StartErrorKind,
 } from "@/lib/verification-ui";
@@ -105,30 +106,49 @@ export default function DashboardClient({
     return () => clearTimeout(timer);
   }, [checkVerificationStatus]);
 
+  // Single boolean for the poll effect below: depending on the whole
+  // verification object would restart the 60-second timer on every poll
+  // response (new object identity), so the timeout could never fire.
+  // shouldPoll flips only on real state transitions.
+  const shouldPoll = shouldKeepPolling(verification);
+
   // Lives at this level (not inside HomeSection) so polling keeps running even
   // if the user switches to the Wallet/Activity section mid-verification.
+  // Polls while the proof is pending and while a verified proof still has
+  // issuance pending (see shouldKeepPolling) — the status endpoint is
+  // side-effect-free for verified records, so these ticks only re-read.
+  // Stops on issued/failed issuance, failed verification, timeout, unmount.
   useEffect(() => {
-    if (verification?.status !== "pending") {
+    if (!shouldPoll) {
       setPollTimedOut(false);
       return;
     }
 
     const startedAt = Date.now();
+    let inFlight = false;
     const interval = setInterval(() => {
       if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
         setPollTimedOut(true);
         clearInterval(interval);
         return;
       }
-      checkVerificationStatus();
+      // Skip ticks while a previous poll is still outstanding — avoids
+      // overlapping requests without blocking manual refresh/retry buttons.
+      if (inFlight) return;
+      inFlight = true;
+      void checkVerificationStatus().finally(() => {
+        inFlight = false;
+      });
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-    // verification?.id (not just status) is a dependency on purpose: retrying
-    // creates a new record whose status is still "pending" — the same string
-    // as before — so without watching id too, a retry after a timeout would
-    // never restart this effect and the timer/pollTimedOut flag would stay stuck.
-  }, [verification?.id, verification?.status, checkVerificationStatus]);
+    // verification id is a dependency on purpose: retrying creates a new
+    // record whose derived poll flag matches the old one, so without the id
+    // a retry after a timeout would never restart this effect and the
+    // timer/pollTimedOut flag would stay stuck. shouldPoll flips on every
+    // other relevant transition (pending/verified/issued/failed) without
+    // resetting the 60-second bound on ticks that change nothing.
+  }, [verification?.id, shouldPoll, checkVerificationStatus]);
 
   const startVerification = useCallback(async () => {
     // Guards against a double-click (or a fast double-tap on "try again")

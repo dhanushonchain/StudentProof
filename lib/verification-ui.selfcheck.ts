@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import {
   deriveVerificationUi,
   isValidDateString,
+  shouldKeepPolling,
   startErrorMessage,
   type UiCredentialInput,
   type UiVerificationInput,
@@ -118,6 +119,27 @@ assert.deepEqual(deriveVerificationUi(verification("pending"), []), { kind: "pro
     assert.ok(copy.length > 10, kind);
     assert.ok(!/https?:|0x|stack|500|401/i.test(copy), kind);
   }
+}
+
+// Polling predicate: proof-pending and issuance-pending poll; everything
+// terminal stops (manual refresh/retry take over from there).
+{
+  assert.equal(shouldKeepPolling(null), false);
+  assert.equal(shouldKeepPolling(verification("pending")), true);
+  assert.equal(
+    shouldKeepPolling(verification("verified", { status: "pending", retryAllowed: true, message: null })),
+    true
+  );
+  assert.equal(
+    shouldKeepPolling(verification("verified", { status: "issued", retryAllowed: false, message: null })),
+    false
+  );
+  assert.equal(
+    shouldKeepPolling(verification("verified", { status: "failed", retryAllowed: true, message: "x" })),
+    false
+  );
+  assert.equal(shouldKeepPolling(verification("failed")), false);
+  assert.equal(shouldKeepPolling({ status: "verified", issuance: undefined } as unknown as UiVerificationInput), false);
 }
 
 console.log("verification-ui: all checks passed");

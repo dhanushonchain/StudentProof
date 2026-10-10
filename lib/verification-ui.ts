@@ -36,6 +36,17 @@ export function isValidDateString(value: string): boolean {
   return !Number.isNaN(Date.parse(value));
 }
 
+// Whether the dashboard should keep polling the status endpoint: while the
+// proof is pending, or while a verified proof still has issuance pending.
+// Every other state is terminal for polling (issued/failed issuance,
+// failed verification, or nothing to check) and relies on manual refresh
+// or retry — polling must never trigger issuance itself.
+export function shouldKeepPolling(verification: UiVerificationInput): boolean {
+  if (!verification) return false;
+  if (verification.status === "pending") return true;
+  return verification.status === "verified" && verification.issuance?.status === "pending";
+}
+
 // Client-side startup failures (the verification request never reached a
 // verdict). Fixed copy — no status codes, URLs, or stack traces in the UI.
 export type StartErrorKind = "network" | "unauthorized" | "server" | "unknown";
