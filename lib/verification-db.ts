@@ -77,28 +77,20 @@ export async function setReclaimSessionId(verificationRecordId: string, sessionI
 // is logged loudly (never thrown) so it's visible and can be retried/
 // backfilled later, rather than silently corrupting a real verification.
 //
-// `programmeInfo` is populated from the SAMARTH provider's extracted
-// programmeCode/admissionCycle (see lib/reclaim.ts's extractProgrammeInfo).
-// It's used ONLY to compute expiresAt and is never itself logged, stored, or
-// passed any further — per StudentProof's privacy rules, only the derived
-// date is allowed to survive. Computed BEFORE the "verified" write below: an
-// unknown programme code/cycle must fail the verification cleanly (caller
-// should catch and call markFailed), not write "verified" and then have to
-// revert it.
-//
-// Minting requires expiresAt (the contract's mintCredential takes it as a
-// required argument), so without programmeInfo there is nothing valid to
-// mint — that case is logged clearly and skipped, not attempted with a
-// placeholder value.
+// `programmeInfo` used to gate issuance: when the provider omitted
+// programme fields, no expiry was computed and the mint was silently
+// skipped while the record stayed "verified" — a dead end with no
+// credential and no retry signal. Expiry is now programme-independent
+// (exactly 1 year after issuance — see lib/programme-expiry.ts), so it is
+// always computed and issuance is always attempted for a verified proof.
+// Provider-field extraction (lib/reclaim.ts's extractProgrammeInfo) is kept
+// as a documented, tested probe of provider shape for future diagnostics,
+// but nothing in the issuance path may depend on it.
 export async function markVerified(
   verificationRecordId: string,
-  proofReference: string,
-  programmeInfo?: { programmeCode: string; admissionCycle: string }
+  proofReference: string
 ): Promise<VerificationDTO> {
-  let expiresAt: Date | undefined;
-  if (programmeInfo) {
-    expiresAt = computeCredentialExpiry(programmeInfo.programmeCode, programmeInfo.admissionCycle).expiresAt;
-  }
+  const { expiresAt } = computeCredentialExpiry();
 
   const record = await prisma.verificationRecord.update({
     where: { id: verificationRecordId },
@@ -109,17 +101,9 @@ export async function markVerified(
     data: { userId: record.userId, eventType: "verification_completed" },
   });
 
-  if (!expiresAt) {
-    console.error(
-      "[Credential] No programme info available for verification",
-      verificationRecordId,
-      "(user",
-      record.userId,
-      ") — cannot compute expiresAt, skipping mint. Verification status is unaffected."
-    );
-    return toDTO(record);
-  }
-
+  // Issuance is always attempted once the proof is verified above. A mint
+  // failure is logged loudly (never thrown) so it's visible and can be
+  // retried/backfilled later — verification status is unaffected.
   try {
     const user = await prisma.user.findUniqueOrThrow({ where: { id: record.userId } });
     const { contractAddress, tokenId, transactionHash } = await mintStudentCredential({

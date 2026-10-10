@@ -33,8 +33,7 @@ export async function GET(req: NextRequest) {
   if (verification?.status === "pending" && sessionId) {
     try {
       const { fetchStatusUrl, verifyProof } = await import("@reclaimprotocol/js-sdk");
-      const { SAMARTH_PROVIDER_ID, extractProgrammeInfo } = await import("@/lib/reclaim");
-      const { UnknownProgrammeCodeError, UnknownAdmissionCycleError } = await import("@/lib/programme-expiry");
+      const { SAMARTH_PROVIDER_ID } = await import("@/lib/reclaim");
 
       const statusResult = await fetchStatusUrl(sessionId);
       const statusV2 = statusResult.session?.statusV2;
@@ -52,19 +51,7 @@ export async function GET(req: NextRequest) {
       if (proofs?.length) {
         const result = await verifyProof(proofs.length === 1 ? proofs[0] : proofs, { providerId: SAMARTH_PROVIDER_ID });
         if (result.isVerified) {
-          const programmeInfo = extractProgrammeInfo(proofs[0]);
-          try {
-            verification = await markVerified(verification.id, proofs[0].identifier, programmeInfo);
-          } catch (error) {
-            if (error instanceof UnknownProgrammeCodeError || error instanceof UnknownAdmissionCycleError) {
-              // error.message embeds the raw programme code/cycle — never
-              // log it (see the matching comment in the callback route).
-              console.error("[Verification] Cannot compute credential expiry:", error.name);
-              verification = await markFailed(verification.id);
-            } else {
-              throw error;
-            }
-          }
+          verification = await markVerified(verification.id, proofs[0].identifier);
         } else {
           verification = await markFailed(verification.id);
         }

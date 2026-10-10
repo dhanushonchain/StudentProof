@@ -30,9 +30,20 @@ export const SAMARTH_PROVIDER_ID = "b56fb3c1-4bef-4150-81c0-0d2309f05e7c";
 // string) -> .paramValues, NOT claimData.context (that field is reserved for
 // StudentProof's own setJsonContext payload, e.g. verificationRecordId).
 // Confirmed directly against a real fetched Reclaim session's proof shape.
-// Returns undefined for the current production SAMARTH provider, which only
-// ever proves enrolmentnumber — programmeCode/admissionCycle simply aren't
-// present in that provider's paramValues.
+//
+// What the CURRENT production provider (b56fb3c1-…) returns is UNVERIFIED:
+// an earlier provider version demonstrably returned programmecode +
+// admissionyearcycle (see git history for lib/programme-duration.json and
+// the old selfcheck's captured SAMARTH example), while a later observation
+// suggested enrolmentnumber-only. Do not treat either as ground truth until
+// a live proof against the current provider ID is inspected.
+//
+// Either way, credential issuance MUST NOT depend on this function's result:
+// expiry is programme-independent (see lib/programme-expiry.ts) and
+// markVerified always attempts the mint for a verified proof. This function
+// is retained as a documented, tested probe of provider shape only — its
+// return value is never logged, stored, or minted, and it is never called
+// on the issuance path.
 export function extractProgrammeInfo(proof: {
   claimData: { parameters: string };
 }): { programmeCode: string; admissionCycle: string } | undefined {

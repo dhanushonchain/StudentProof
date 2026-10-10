@@ -12,9 +12,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { verifyProof } = await import("@reclaimprotocol/js-sdk");
-  const { SAMARTH_PROVIDER_ID, extractProgrammeInfo } = await import("@/lib/reclaim");
+  const { SAMARTH_PROVIDER_ID } = await import("@/lib/reclaim");
   const { markVerified, markFailed } = await import("@/lib/verification-db");
-  const { UnknownProgrammeCodeError, UnknownAdmissionCycleError } = await import("@/lib/programme-expiry");
 
   // Recover which VerificationRecord this proof correlates to — set via
   // setJsonContext({ verificationRecordId }) in /start, round-trips as a JSON
@@ -38,22 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ verified: false, error: result.error?.message }, { status: 400 });
   }
 
-  const programmeInfo = extractProgrammeInfo(proof);
-
-  try {
-    await markVerified(verificationRecordId, proof.identifier, programmeInfo);
-  } catch (error) {
-    if (error instanceof UnknownProgrammeCodeError || error instanceof UnknownAdmissionCycleError) {
-      // error.message embeds the raw programme code/cycle — never log or
-      // return it (privacy rule: no raw verification values survive past
-      // this point, not even in logs or API responses). error.name alone is
-      // enough to diagnose which case fired.
-      console.error("[Verification] Cannot compute credential expiry:", error.name);
-      await markFailed(verificationRecordId);
-      return NextResponse.json({ verified: false, error: error.name }, { status: 400 });
-    }
-    throw error;
-  }
+  await markVerified(verificationRecordId, proof.identifier);
 
   return NextResponse.json({ verified: true });
 }
