@@ -5,6 +5,13 @@ import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
 import type { ActivityEventDTO } from "@/lib/activity-db";
 import type { CredentialDTO, VerificationDTO } from "@/lib/verification-db";
+import { MAX_ISSUANCE_ATTEMPTS } from "@/lib/issuance-policy";
+import {
+  deriveVerificationUi,
+  isValidDateString,
+  startErrorMessage,
+  type StartErrorKind,
+} from "@/lib/verification-ui";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -18,7 +25,7 @@ import {
   ShieldCheck,
   Wallet,
 } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 export type DashboardUser = {
   name: string;
@@ -56,6 +63,17 @@ export default function DashboardClient({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const checkVerificationStatus = useCallback(async () => {
     try {
@@ -65,11 +83,27 @@ export default function DashboardClient({
       const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
-      if (data.verification) setVerification(data.verification);
+      // Guard malformed payloads: a missing/invalid verification object must
+      // never wipe or corrupt the current state.
+      if (mountedRef.current && data && typeof data.verification === "object" && data.verification !== null) {
+        setVerification(data.verification as VerificationDTO);
+      }
     } catch {
-      // Transient network error — the next poll tick or manual click will retry.
+      // Transient network error — persisted state is untouched; the next
+      // poll tick or manual click will retry. Never downgrade to failed here.
     }
   }, [sessionId]);
+
+  // Backend is the source of truth: refetch on mount so refreshes, tab
+  // switches, and returns from the Reclaim flow reconstruct state from
+  // persisted data instead of stale in-memory state. Deferred a tick so the
+  // fetch runs outside the render-commit phase.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkVerificationStatus();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [checkVerificationStatus]);
 
   // Lives at this level (not inside HomeSection) so polling keeps running even
   // if the user switches to the Wallet/Activity section mid-verification.
@@ -104,27 +138,95 @@ export default function DashboardClient({
     // "pending"/"failed" row that can outrank the real one by createdAt.
     if (starting) return;
     setStarting(true);
+    setStartError(null);
     try {
       const res = await fetch("/api/verification/start", { method: "POST" });
       if (!res.ok) {
-        console.error("Failed to start verification");
+        // The start route returns safe, displayable copy on failure — prefer
+        // it, and only fall back to a fixed message when it is absent.
+        let kind: StartErrorKind = "server";
+        let copy: string | null = null;
+        if (res.status === 401) {
+          kind = "unauthorized";
+        } else {
+          try {
+            const data = await res.json();
+            if (data && typeof data.error === "string" && data.error.length > 0) {
+              copy = data.error;
+            }
+          } catch {
+            // Non-JSON error body — fall through to the fixed copy.
+          }
+        }
+        setStartError(copy ?? startErrorMessage(kind));
         return;
       }
       const data = await res.json();
+      if (!data || typeof data.requestUrl !== "string") {
+        setStartError(startErrorMessage("server"));
+        return;
+      }
       window.open(data.requestUrl, "_blank", "noopener,noreferrer");
-      setSessionId(data.sessionId ?? null);
+      setSessionId(typeof data.sessionId === "string" ? data.sessionId : null);
+      setPollTimedOut(false);
       setVerification({
         id: data.verificationId,
         status: "pending",
         proofReference: null,
-        reclaimSessionId: data.sessionId ?? null,
+        reclaimSessionId: typeof data.sessionId === "string" ? data.sessionId : null,
         verifiedAt: null,
         createdAt: new Date().toISOString(),
+        issuance: {
+          status: "not_started",
+          attempts: 0,
+          attemptsRemaining: MAX_ISSUANCE_ATTEMPTS,
+          retryAllowed: false,
+          message: null,
+          txHash: null,
+        },
       });
+    } catch {
+      setStartError(startErrorMessage("network"));
     } finally {
-      setStarting(false);
+      if (mountedRef.current) setStarting(false);
     }
   }, [starting]);
+
+  const retryIssuance = useCallback(async () => {
+    // Same double-activation guard as startVerification: the backend claim
+    // would serialize duplicates anyway, but the button must not invite them.
+    if (retrying) return;
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const res = await fetch("/api/verification/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (!res.ok) {
+        let copy = "Issuance retry failed. Try again in a moment.";
+        try {
+          const data = await res.json();
+          if (data && typeof data.error === "string" && data.error.length > 0) {
+            copy = data.error;
+          }
+        } catch {
+          // Non-JSON error body — keep the fallback copy.
+        }
+        setRetryError(copy);
+        return;
+      }
+      // Reload the canonical record: the retry response carries the outcome,
+      // but the persisted DTO (with server-computed retry verdict) is what
+      // the UI renders from.
+      await checkVerificationStatus();
+    } catch {
+      setRetryError("Could not reach the server. Your verification is safe — try again.");
+    } finally {
+      if (mountedRef.current) setRetrying(false);
+    }
+  }, [retrying, checkVerificationStatus]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#09090B] text-white antialiased">
@@ -139,8 +241,13 @@ export default function DashboardClient({
           credentials={credentials}
           credentialContractAddress={credentialContractAddress}
           pollTimedOut={pollTimedOut}
+          starting={starting}
+          startError={startError}
+          retrying={retrying}
+          retryError={retryError}
           onStartVerification={startVerification}
           onCheckStatus={checkVerificationStatus}
+          onRetryIssuance={retryIssuance}
         />
       )}
 
@@ -167,8 +274,13 @@ function DashboardModal({
   credentials,
   credentialContractAddress,
   pollTimedOut,
+  starting,
+  startError,
+  retrying,
+  retryError,
   onStartVerification,
   onCheckStatus,
+  onRetryIssuance,
 }: {
   activeSection: DashSection;
   onSelect: (section: DashSection) => void;
@@ -179,8 +291,13 @@ function DashboardModal({
   credentials: CredentialDTO[];
   credentialContractAddress: string | null;
   pollTimedOut: boolean;
+  starting: boolean;
+  startError: string | null;
+  retrying: boolean;
+  retryError: string | null;
   onStartVerification: () => void;
   onCheckStatus: () => void;
+  onRetryIssuance: () => void;
 }) {
   return (
     <AnimatePresence>
@@ -211,8 +328,13 @@ function DashboardModal({
               credentials={credentials}
               credentialContractAddress={credentialContractAddress}
               pollTimedOut={pollTimedOut}
+              starting={starting}
+              startError={startError}
+              retrying={retrying}
+              retryError={retryError}
               onStartVerification={onStartVerification}
               onCheckStatus={onCheckStatus}
+              onRetryIssuance={onRetryIssuance}
             />
           )}
           {activeSection === "wallet" && <WalletSection user={user} onClose={onClose} />}
@@ -230,19 +352,32 @@ function HomeSection({
   credentials,
   credentialContractAddress,
   pollTimedOut,
+  starting,
+  startError,
+  retrying,
+  retryError,
   onStartVerification,
   onCheckStatus,
+  onRetryIssuance,
 }: {
   user: DashboardUser;
   verification: VerificationDTO | null;
   credentials: CredentialDTO[];
   credentialContractAddress: string | null;
   pollTimedOut: boolean;
+  starting: boolean;
+  startError: string | null;
+  retrying: boolean;
+  retryError: string | null;
   onStartVerification: () => void;
   onCheckStatus: () => void;
+  onRetryIssuance: () => void;
 }) {
   const firstName = user.name.split(" ")[0] || "Dhanush";
   const lastName = user.name.split(" ")[1] || "Doe";
+  // Backend DTOs in, UI state out — verification and issuance are never
+  // conflated (see lib/verification-ui.ts).
+  const uiState = deriveVerificationUi(verification, credentials);
 
   return (
     <div className="relative flex h-full flex-col">
@@ -254,21 +389,44 @@ function HomeSection({
         </section>
 
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-8 py-4">
-          <div className="w-full">
-            {/* Gate on actually holding a credential, not the latest
-                VerificationRecord's status — that row can be a stray/failed
-                duplicate session (e.g. a double-submitted "Verify" click)
-                even when an earlier attempt in the same batch succeeded and
-                already minted. */}
-            {credentials.some((c) => c.status === "active") ? (
-              <CredentialCard
-                credential={credentials.find((c) => c.status === "active") ?? credentials[0]}
-                contractAddress={credentialContractAddress}
-              />
-            ) : verification?.status === "pending" ? (
+          <div className="w-full" role="status" aria-live="polite">
+            {uiState.kind === "issued" && (
+              <CredentialCard credential={uiState.credential} contractAddress={credentialContractAddress} />
+            )}
+            {uiState.kind === "proof_pending" && (
               <PendingState pollTimedOut={pollTimedOut} onCheckStatus={onCheckStatus} onRetry={onStartVerification} />
-            ) : (
-              <EmptyState onVerify={onStartVerification} />
+            )}
+            {uiState.kind === "proof_failed" && (
+              <ProofFailedState starting={starting} onRetry={onStartVerification} />
+            )}
+            {(uiState.kind === "unverified" || uiState.kind === "verified_no_active_credential") && (
+              <EmptyState
+                starting={starting}
+                startError={startError}
+                onVerify={onStartVerification}
+                notice={
+                  uiState.kind === "verified_no_active_credential"
+                    ? uiState.detail === "expired"
+                      ? "Your previous credential expired. Verify again to get a renewed one."
+                      : uiState.detail === "revoked"
+                        ? "Your previous credential was revoked. Verify again to get a renewed one."
+                        : "Your verification is complete but no credential is showing. Refresh, or verify again."
+                    : null
+                }
+              />
+            )}
+            {uiState.kind === "issuing" && (
+              <IssuingState message={uiState.message} onRefresh={onCheckStatus} />
+            )}
+            {uiState.kind === "issuance_failed" && (
+              <IssuanceFailedState
+                message={uiState.message}
+                retryAllowed={uiState.retryAllowed}
+                retrying={retrying}
+                retryError={retryError}
+                onRetry={onRetryIssuance}
+                onRefresh={onCheckStatus}
+              />
             )}
           </div>
         </div>
@@ -312,6 +470,100 @@ function PendingState({
             Try again
           </Button>
         )}
+      </div>
+    </section>
+  );
+}
+
+function ProofFailedState({ starting, onRetry }: { starting: boolean; onRetry: () => void }) {
+  return (
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+      <h3 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Verification failed</h3>
+      <p className="mx-auto mt-3 max-w-lg leading-7 text-zinc-400">
+        We couldn&apos;t confirm your student status from that session — the login may have expired, been
+        cancelled, or not shown the expected programme page. Your account is unchanged; nothing was issued.
+      </p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Button
+          onClick={onRetry}
+          disabled={starting}
+          aria-label={starting ? "Starting verification" : "Try verification again"}
+          className="h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb] disabled:opacity-60"
+        >
+          {starting ? "Starting…" : "Try again"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function IssuingState({ message, onRefresh }: { message: string; onRefresh: () => void }) {
+  return (
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#27272A] bg-[#09090B]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#E1E0CC]" aria-hidden="true" />
+      </div>
+      <h3 className="mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Issuing your credential</h3>
+      <p className="mx-auto mt-3 max-w-lg leading-7 text-zinc-400">{message}</p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Button
+          onClick={onRefresh}
+          aria-label="Refresh credential status"
+          className="h-11 rounded-2xl border-[#27272A] bg-[#09090B] px-6 text-zinc-300 hover:bg-[#17171A] hover:text-white"
+          variant="outline"
+        >
+          Refresh status
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function IssuanceFailedState({
+  message,
+  retryAllowed,
+  retrying,
+  retryError,
+  onRetry,
+  onRefresh,
+}: {
+  message: string;
+  retryAllowed: boolean;
+  retrying: boolean;
+  retryError: string | null;
+  onRetry: () => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
+      <h3 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Issuance needs a retry</h3>
+      <p className="mx-auto mt-3 max-w-lg leading-7 text-zinc-400">{message}</p>
+      {retryError && (
+        <p role="alert" className="mx-auto mt-3 max-w-lg text-sm leading-6 text-red-300">
+          {retryError}
+        </p>
+      )}
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        {retryAllowed ? (
+          <Button
+            onClick={onRetry}
+            disabled={retrying}
+            aria-label={retrying ? "Retrying issuance" : "Retry credential issuance"}
+            className="h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb] disabled:opacity-60"
+          >
+            {retrying ? "Retrying…" : "Retry issuance"}
+          </Button>
+        ) : (
+          <p className="w-full text-sm text-zinc-500">Automatic retries are exhausted — contact support.</p>
+        )}
+        <Button
+          onClick={onRefresh}
+          aria-label="Refresh credential status"
+          className="h-11 rounded-2xl border-[#27272A] bg-[#09090B] px-6 text-zinc-300 hover:bg-[#17171A] hover:text-white"
+          variant="outline"
+        >
+          Refresh status
+        </Button>
       </div>
     </section>
   );
@@ -447,8 +699,12 @@ function CredentialCard({
     year: "numeric",
     timeZone: "Asia/Kolkata",
   };
-  const issuedDate = new Date(credential.issuedAt).toLocaleDateString("en-IN", dateFormat);
-  const expiresDate = new Date(credential.expiresAt).toLocaleDateString("en-IN", dateFormat);
+  const issuedDate = isValidDateString(credential.issuedAt)
+    ? new Date(credential.issuedAt).toLocaleDateString("en-IN", dateFormat)
+    : "—";
+  const expiresDate = isValidDateString(credential.expiresAt)
+    ? new Date(credential.expiresAt).toLocaleDateString("en-IN", dateFormat)
+    : "—";
 
   const statusDotColor: Record<CredentialDTO["status"], string> = {
     active: "bg-emerald-500",
@@ -516,7 +772,17 @@ function CredentialRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function EmptyState({ onVerify }: { onVerify: () => void }) {
+function EmptyState({
+  starting,
+  startError,
+  notice,
+  onVerify,
+}: {
+  starting: boolean;
+  startError: string | null;
+  notice: string | null;
+  onVerify: () => void;
+}) {
   return (
     <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 text-center sm:p-8 md:p-10">
       <h3 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:whitespace-nowrap md:text-4xl">
@@ -553,10 +819,29 @@ function EmptyState({ onVerify }: { onVerify: () => void }) {
       </ol>
       <Button
         onClick={onVerify}
-        className="mt-8 h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb]"
+        disabled={starting}
+        aria-label={starting ? "Starting verification" : "Verify student identity"}
+        className="mt-8 h-11 rounded-2xl bg-[#E1E0CC] px-6 text-[#09090B] hover:bg-[#f0efdb] disabled:opacity-60"
       >
-        Verify Student
+        {starting ? "Starting…" : "Verify Student"}
       </Button>
+      {notice && <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-zinc-400">{notice}</p>}
+      {startError && (
+        <div className="mx-auto mt-4 max-w-lg rounded-2xl border border-red-900/60 bg-red-950/40 p-4">
+          <p role="alert" className="text-sm leading-6 text-red-200">
+            {startError}
+          </p>
+          <Button
+            onClick={onVerify}
+            disabled={starting}
+            aria-label="Retry starting verification"
+            className="mt-3 h-10 rounded-xl border-[#27272A] bg-[#09090B] px-5 text-sm text-zinc-200 hover:bg-[#17171A] hover:text-white"
+            variant="outline"
+          >
+            Try again
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,5 +1,14 @@
 import "server-only";
-import { createPublicClient, createWalletClient, http, parseEventLogs, type Address, type Hex } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  getAddress,
+  http,
+  isAddress,
+  parseEventLogs,
+  type Address,
+  type Hex,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { avalancheFuji } from "viem/chains";
 
@@ -132,4 +141,52 @@ export async function hasValidCredential(walletAddress: Address): Promise<boolea
     functionName: "hasValidCredential",
     args: [walletAddress],
   });
+}
+
+export type MintReceiptCheck = { found: false } | { found: true; succeeded: boolean; tokenId: string | null };
+
+// Receipt lookup for a previously broadcast mint hash — the reconciliation
+// primitive for ambiguous attempts (timeout before hash receipt, crash
+// between broadcast and DB write). `found: false` covers BOTH "unknown
+// hash" and "still pending" (viem cannot distinguish them): callers must
+// treat it as ambiguous and re-check later, never as failure.
+export async function getMintReceipt(txHash: Hex): Promise<MintReceiptCheck> {
+  if (!STUDENT_CREDENTIAL_REGISTRY_ADDRESS) {
+    throw new Error("STUDENT_CREDENTIAL_REGISTRY_ADDRESS environment variable is not set");
+  }
+
+  let receipt;
+  try {
+    receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+  } catch {
+    return { found: false };
+  }
+  if (!receipt || receipt.status !== "success") {
+    return { found: true, succeeded: false, tokenId: null };
+  }
+
+  const [mintedEvent] = parseEventLogs({
+    abi: STUDENT_CREDENTIAL_REGISTRY_ABI,
+    eventName: "CredentialMinted",
+    logs: receipt.logs,
+  });
+  return { found: true, succeeded: true, tokenId: mintedEvent?.args.tokenId.toString() ?? null };
+}
+
+// All tokenIds ever minted to a wallet per CredentialMinted logs (student
+// is an indexed event param, so the node filters server-side). Used to
+// adopt an on-chain credential that never got a database row, instead of
+// blindly rebroadcasting. Malformed input yields [] rather than throwing.
+export async function findMintedTokenIds(walletAddress: string): Promise<string[]> {
+  if (!STUDENT_CREDENTIAL_REGISTRY_ADDRESS) {
+    throw new Error("STUDENT_CREDENTIAL_REGISTRY_ADDRESS environment variable is not set");
+  }
+  if (!isAddress(walletAddress, { strict: false })) return [];
+
+  const logs = await publicClient.getLogs({
+    address: STUDENT_CREDENTIAL_REGISTRY_ADDRESS,
+    event: STUDENT_CREDENTIAL_REGISTRY_ABI[2],
+    args: { student: getAddress(walletAddress) },
+  });
+  return logs.map((log) => log.args.tokenId?.toString() ?? "").filter((id) => id !== "");
 }

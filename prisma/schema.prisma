@@ -38,6 +38,26 @@ model VerificationRecord {
   reclaimSessionId String?
   verifiedAt     DateTime?
   createdAt      DateTime  @default(now())
+
+  // Credential-issuance lifecycle — deliberately separate from the
+  // proof-verification `status` above. A valid proof must never be marked
+  // invalid because minting failed, and a verified student must not be
+  // shown an issued credential until the mint is chain-confirmed:
+  // "not_started" | "pending" | "issued" | "failed".
+  // `pending` covers an in-flight attempt and an awaiting retry; the
+  // orchestrator's atomic claim (optimistic concurrency on
+  // issuanceAttempts) decides which instance owns it. Only the error
+  // *category* is persisted here — never raw RPC output, URLs, or keys.
+  issuanceStatus    String    @default("not_started")
+  issuanceAttempts  Int       @default(0)
+  lastIssuanceError String?
+  // Transaction hash of the latest broadcast attempt, when known. Used to
+  // reconcile ambiguous attempts via getTransactionReceipt before any
+  // rebroadcast — never assume a timeout means failure.
+  mintTxHash        String?
+  issuanceUpdatedAt DateTime? @updatedAt
+
+  issuedCredential Credential?
 }
 
 model Business {
@@ -85,4 +105,12 @@ model Credential {
   // as immediately "expired" is accurate enough. Every row minted from here
   // on always sets a real computed value explicitly (see markVerified).
   expiresAt       DateTime @default(now())
+  // Which verification record this credential was issued for. The UNIQUE
+  // constraint is the database-level duplicate-mint guard: at most one
+  // credential row may ever reference a record, so two concurrent issuance
+  // attempts for the same record cannot both persist (the loser catches the
+  // unique violation and reconciles to issued instead of re-minting).
+  // NULL for rows minted before this column existed.
+  verificationRecordId String?             @unique
+  verificationRecord   VerificationRecord? @relation(fields: [verificationRecordId], references: [id])
 }
