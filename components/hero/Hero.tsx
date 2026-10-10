@@ -109,15 +109,27 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
       <section className="h-screen w-full">
         <div className="relative h-full w-full overflow-hidden">
           
-          {/* Background video */}
+          {/* Mobile background image (phones) — shown below the md breakpoint
+              only (md:hidden), so desktop browsers never fetch it. Cover +
+              center fills narrow viewports without distortion; the shared
+              noise/gradient overlays below keep text readable. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[url(/phone-bg.png)] bg-cover bg-center bg-no-repeat md:hidden"
+          />
+
+          {/* Background video (laptop/desktop) — hidden below md, and the
+              source's media query keeps mobile browsers from downloading
+              the video at all. Desktop playback behavior is unchanged. */}
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 h-full w-full object-cover"
+            aria-hidden="true"
+            className="absolute inset-0 hidden h-full w-full object-cover md:block"
           >
-            <source src="/hero.mp4" type="video/mp4"/>
+            <source src="/hero.mp4" type="video/mp4" media="(min-width: 768px)" />
           </video>
 
           {/* Noise overlay */}
