@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import PrismaHero from "@/components/hero/Hero";
+import { MinimalFooter as Footer } from "@/components/ui/minimal-footer";
 import type { ProfileMenuUser } from "@/components/profile-menu/profile-menu";
 
 export default async function DemoOne() {
@@ -12,5 +13,10 @@ export default async function DemoOne() {
       }
     : null;
 
-  return <PrismaHero user={user} />;
+  return (
+    <>
+      <PrismaHero user={user} />
+      <Footer />
+    </>
+  );
 }
