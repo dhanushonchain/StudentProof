@@ -117,3 +117,19 @@ export async function mintStudentCredential({
     transactionHash,
   };
 }
+
+// Read-only check — no private key needed, just an eth_call. Backs the
+// public GET /api/verify endpoint that lets any third party check a
+// wallet's credential status without installing anything.
+export async function hasValidCredential(walletAddress: Address): Promise<boolean> {
+  if (!STUDENT_CREDENTIAL_REGISTRY_ADDRESS) {
+    throw new Error("STUDENT_CREDENTIAL_REGISTRY_ADDRESS environment variable is not set");
+  }
+
+  return publicClient.readContract({
+    address: STUDENT_CREDENTIAL_REGISTRY_ADDRESS,
+    abi: STUDENT_CREDENTIAL_REGISTRY_ABI,
+    functionName: "hasValidCredential",
+    args: [walletAddress],
+  });
+}

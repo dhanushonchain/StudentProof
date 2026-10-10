@@ -4,12 +4,18 @@ declare module "next-auth" {
   interface User {
     walletPublicKey?: string;
     loginAt?: string;
+    businessId?: string;
+    businessName?: string;
+    businessApiKeyOnce?: string;
   }
 
   interface Session {
     user: User & {
       walletPublicKey?: string;
       loginAt?: string;
+      businessId?: string;
+      businessName?: string;
+      businessApiKeyOnce?: string;
     };
   }
 }
@@ -19,5 +25,8 @@ declare module "next-auth/jwt" {
     walletPublicKey?: string;
     googleSub?: string;
     loginAt?: string;
+    businessId?: string;
+    businessName?: string;
+    businessApiKeyOnce?: string;
   }
 }

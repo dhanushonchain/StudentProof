@@ -11,6 +11,13 @@ export default async function Dashboard() {
     redirect("/");
   }
 
+  // A business session (signed in via the separate "google-business"
+  // provider) has no walletPublicKey/User row at all — send it to /sdk
+  // instead of rendering an empty/broken student dashboard for it.
+  if (session.user?.businessId) {
+    redirect("/sdk");
+  }
+
   const user: DashboardUser = {
     name: session.user?.name ?? "Dhanush Yangola",
     email: session.user?.email ?? "yangoladhanush@gmail.com",

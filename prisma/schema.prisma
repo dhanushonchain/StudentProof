@@ -40,6 +40,38 @@ model VerificationRecord {
   createdAt      DateTime  @default(now())
 }
 
+model Business {
+  id         String   @id @default(cuid())
+  // Identity comes from Google sign-in (a completely separate NextAuth
+  // provider id from the student flow — see auth.ts) — googleSub, not email,
+  // is the real unique key, same pattern as User. A business signing in
+  // never creates or reads a User row, and a student signing in never
+  // creates or reads a Business row; the two are fully independent tables
+  // keyed off the same kind of identity but never cross-referenced.
+  googleSub  String   @unique
+  name       String
+  email      String
+  // The raw key is shown to the business exactly once (their first Google
+  // sign-in) and emailed then — only its SHA-256 hash is ever persisted,
+  // same principle as not storing a plaintext password. Lookup on incoming
+  // requests hashes the presented key and compares against this column.
+  apiKeyHash String   @unique
+  createdAt  DateTime @default(now())
+
+  usageEvents ApiUsageEvent[]
+}
+
+// One row per successful (API-key-authenticated) call to a public
+// verification endpoint. Deliberately minimal for now — just enough to
+// answer "which business, how many requests" — extend with an endpoint/cost
+// field later if usage-based billing needs more granularity.
+model ApiUsageEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  timestamp  DateTime @default(now())
+}
+
 model Credential {
   id              String   @id @default(cuid())
   userId          String
