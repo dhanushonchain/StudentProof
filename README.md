@@ -66,7 +66,7 @@ flowchart LR
 | App | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Framer Motion |
 | Auth | Auth.js v5 (NextAuth beta), Google OAuth |
 | Backend | Next.js Route Handlers (Node runtime) |
-| Database | PostgreSQL via Neon, Prisma ORM v7 |
+| Database | PostgreSQL (Aiven in production), Prisma ORM v7 with `@prisma/adapter-pg` |
 | Verification | Reclaim Protocol (`@reclaimprotocol/js-sdk` v5) |
 | Chain | Avalanche Fuji testnet (C-Chain, chain id 43113), `viem` |
 | Contracts | Foundry (Solidity, OpenZeppelin): soulbound credential registry + provider registry |
@@ -161,7 +161,7 @@ middleware.ts               Protects /dashboard/*
 ## Prerequisites
 
 - Node.js and npm (`package-lock.json` is the lockfile).
-- A PostgreSQL database (the project uses Neon in production; any Postgres works locally) with a `DATABASE_URL`.
+- A PostgreSQL database (Aiven in production; any Postgres works locally) with a `DATABASE_URL`. The app connects over standard PostgreSQL TCP via the `pg` driver — no vendor-specific adapter. For Aiven hosts the driver pins the project's public CA (`lib/certs/aiven-ca.pem`, full verification); other hosts keep default driver TLS behavior.
 - Google OAuth credentials (client id + secret) with the redirect URI `<your-origin>/api/auth/callback/google` authorized.
 - A Reclaim app id + secret with access to the configured provider.
 - Avalanche Fuji RPC access (defaults to the public testnet endpoint) plus the deployed registry address; a funded minter key is required for real minting.
@@ -186,7 +186,7 @@ npm run dev
 
 Open `http://localhost:3000`. Sign in with Google using your own OAuth test client.
 
-> Do not run `prisma migrate reset` or any destructive command against a shared database. Applying migrations to Neon/production requires explicit approval.
+> Do not run `prisma migrate reset` or any destructive command against a shared database. Applying migrations to production requires explicit approval.
 
 ## Environment variables
 
@@ -275,7 +275,7 @@ The `*.selfcheck.ts` files are dependency-free assert scripts (the repo has no a
 
 - Implemented in code: Google sign-in (student + business), wallet derivation, Reclaim start/callback/status polling, server-side proof validation, issuance lifecycle with claim/reconcile/retry, authenticated retry endpoint, dashboard states, business API keys, public `/api/verify`, emails.
 - Covered by automated tests: contracts (31 forge tests), issuance policy/integration/UI derivation, provider-shape extraction, expiry math.
-- Verified against scratch infrastructure: full migration history applies cleanly to throwaway Postgres; Neon shows the new migration as pending (not applied).
+- Verified against scratch infrastructure: full migration history applies cleanly to throwaway Postgres.
 - **Not verified end-to-end:** live Google login, a real Reclaim proof against the current provider, a real Fuji mint, and an external developer integration. Do not treat mocked-test success as production readiness.
 
 ## Known limitations
