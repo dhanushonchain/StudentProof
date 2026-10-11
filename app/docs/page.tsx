@@ -6,17 +6,12 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { TopAccessNav, type AccessPath } from "@/components/nav-bar/nav-bar";
+import { SdkModalContent } from "@/app/sdk/sdk-content";
 
 
 const CREAM = "#E1E0CC";
 const BG = "#050608";
 const docsPlaceholders = {
-  "/sdk": {
-    label: "SDK",
-    heading: "SDK documentation placeholder",
-    body: "Full SDK guides, installation, and examples will be added here.",
-    sidebarItem: "SDK Placeholder",
-  },
   "/pricing": {
     label: "Pricing",
     heading: "Free during beta",
@@ -30,7 +25,7 @@ export const PlaceholderDocsContent = ({
   modal = false,
   onClose,
 }: {
-  page: "/sdk" | "/pricing";
+  page: "/pricing";
   modal?: boolean;
   onClose?: () => void;
 }) => {
@@ -619,6 +614,12 @@ export const DocsModal = ({
         >
           {activePath === "/docs" ? (
             <DocsContent modal onClose={onClose} />
+          ) : activePath === "/sdk" ? (
+            <div className="h-full overflow-y-auto px-6 py-8 sm:px-10" style={{ background: BG, color: CREAM }}>
+              <div className="mx-auto w-full max-w-3xl space-y-6 pb-8">
+                <SdkModalContent />
+              </div>
+            </div>
           ) : (
             <PlaceholderDocsContent page={activePath} modal onClose={onClose} />
           )}

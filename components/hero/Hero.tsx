@@ -152,6 +152,9 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                   </Link>
                 )}
                 {navItems.map((item) => {
+                  // DOCS/SDK/PRICING open the in-page docs modal (same behavior
+                  // for all three) — the SDK tab renders the real SDK access
+                  // UI inside the modal, not a placeholder.
                   const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/pricing";
 
                   if (isDocsSurface) {
