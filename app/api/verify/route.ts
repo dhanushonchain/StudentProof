@@ -34,6 +34,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(verifyErrorBody("Invalid API key."), { status: 401, headers: CORS_HEADERS });
   }
 
+  // Shared rate limiting (60/min per business id) runs here: after auth so
+  // the stable business id — never the raw key — identifies the caller, and
+  // before any validation or chain call so rejected requests cost nothing.
+  // See lib/verify-ratelimit.ts; route-handler behavior itself has no
+  // harness, so this wiring is review-verified, not test-executed.
+  const { checkVerifyRateLimit } = await import("@/lib/verify-ratelimit");
+  const { rateLimitExceededBody, rateLimitUnavailableBody } = await import("@/lib/verify-ratelimit-policy");
+  const rate = await checkVerifyRateLimit(business.id);
+  if (rate.outcome === "limited") {
+    return NextResponse.json(rateLimitExceededBody(), {
+      status: 429,
+      headers: { ...CORS_HEADERS, "Retry-After": String(rate.retryAfterSec), "Cache-Control": "no-store" },
+    });
+  }
+  if (rate.outcome === "unavailable") {
+    // Fail closed: store misconfigured or unreachable. No chain call.
+    return NextResponse.json(rateLimitUnavailableBody(), {
+      status: 503,
+      headers: { ...CORS_HEADERS, "Cache-Control": "no-store" },
+    });
+  }
+  // `allowed` and explicit local-dev `bypass_dev` both fall through.
+
   const wallet = req.nextUrl.searchParams.get("wallet");
 
   // The zero address passes format checks but reverts on-chain (OZ

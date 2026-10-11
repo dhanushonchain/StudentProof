@@ -117,7 +117,7 @@ const res = await fetch(
 const { valid } = await res.json();
 ```
 
-No rate limiting is implemented yet. Only a boolean is returned; no student data is exposed.
+Calls are rate-limited to 60 requests per minute per API key (sliding window shared across instances via Valkey). Exceeding the limit returns `429` with a `Retry-After` header; if the limiter is unavailable the API fails closed with `503`. Only a boolean is returned; no student data is exposed.
 
 ## Project structure
 
@@ -207,6 +207,8 @@ Derived from `process.env` references in source (values never shown). Auth.js v5
 | `AVALANCHE_RPC_URL` | Fuji RPC endpoint (defaults to public testnet URL) | No | `credential-contract.ts` |
 | `PUBLIC_URL` | Public base URL for the Reclaim webhook; unset = polling fallback | No | Verification start |
 | `NODE_ENV` | Standard Node environment flag | No | Framework |
+| `VALKEY_URL` | Valkey/Redis-compatible connection URL (`rediss://…` with TLS) for API rate limiting | Yes in production/preview | `verify-ratelimit.ts` |
+| `VERIFY_RATELIMIT_BYPASS` | Set to `1` to disable rate limiting — local development only, never on Vercel | No (dev-only) | `verify-ratelimit.ts` |
 
 The following appear only in Foundry scripts/docs, not in app runtime: `PRIVATE_KEY`, `MINTER_ADDRESS` (deploy scripts). No longer referenced anywhere in current source: distributor/Reclaim-private-key style legacy entries — do not add them to new setups.
 
@@ -281,7 +283,7 @@ The `*.selfcheck.ts` files are dependency-free assert scripts (the repo has no a
 ## Known limitations
 
 - Cross-instance duplicate protection rests on the atomic DB claim plus the unique credential-per-record constraint; absolute on-chain exactly-once is impossible without a contract change (the contract intentionally allows multiple credentials per wallet), and re-verification may mint a second credential by design.
-- No rate limiting on public or retry endpoints; no API-key rotation/revocation yet.
+- No rate limiting on the retry endpoint; no API-key rotation/revocation yet.
 - Webhook delivery requires `PUBLIC_URL`; without it the app relies on dashboard polling.
 - `app/business/` is an empty placeholder; `/terms` and `/privacy` routes do not exist (footer marks them "soon").
 - Full-repo `npm run lint` reports ~1100 errors inside vendored `contracts/lib` OpenZeppelin test files (lint scope misconfiguration, not app debt).
