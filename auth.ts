@@ -55,6 +55,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // for the lifetime of the session instead of drifting on every token refresh
       token.loginAt = new Date().toISOString();
 
+      // Whether Google itself reports the account email as verified. This is
+      // display-only metadata (used to label the "verified email" card
+      // truthfully): identity is ALWAYS anchored on googleSub, never on the
+      // email string, so duplicate or unverified emails across Google accounts
+      // can never collide or impersonate. Absent/unknown counts as false.
+      token.googleEmailVerified = profile.email_verified === true;
+
       // If walletPublicKey is not in the token, this is the first login (or wallet was never created)
       if (!token.walletPublicKey) {
         // Lazy-import server-only wallet handler
@@ -93,6 +100,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.walletPublicKey = token.walletPublicKey as string;
         session.user.loginAt = token.loginAt as string;
+        session.user.googleEmailVerified = token.googleEmailVerified === true;
         session.user.businessId = token.businessId as string | undefined;
         session.user.businessName = token.businessName as string | undefined;
         session.user.businessApiKeyOnce = token.businessApiKeyOnce as string | undefined;

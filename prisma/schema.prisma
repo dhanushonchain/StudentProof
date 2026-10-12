@@ -17,6 +17,7 @@ model User {
   activityEvents      ActivityEvent[]
   verificationRecords VerificationRecord[]
   credentials         Credential[]
+  sdkAuthCodes        SdkAuthCode[]
 }
 
 model ActivityEvent {
@@ -55,7 +56,7 @@ model VerificationRecord {
   // reconcile ambiguous attempts via getTransactionReceipt before any
   // rebroadcast — never assume a timeout means failure.
   mintTxHash        String?
-  issuanceUpdatedAt DateTime? @updatedAt
+  issuanceUpdatedAt DateTime? @updatedAt @db.Timestamptz(3)
 
   issuedCredential Credential?
 }
@@ -79,6 +80,30 @@ model Business {
   createdAt  DateTime @default(now())
 
   usageEvents ApiUsageEvent[]
+  apiKeys     BusinessApiKey[]
+}
+
+// Self-serve developer API keys (one business → many keys). Only the
+// SHA-256 hash is ever persisted; the raw secret is returned exactly once at
+// creation and never again. Revocation is a timestamp (rows are kept for
+// audit/usage history, never deleted). The legacy single
+// `Business.apiKeyHash` column stays for backward compatibility with keys
+// issued before this table existed — authenticateApiKey checks both.
+model BusinessApiKey {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  keyHash    String    @unique
+  // Non-secret identifier shown in the dashboard so a developer can tell
+  // keys apart (first 8 chars of the raw key, e.g. "sp_live_"). It cannot be
+  // used to authenticate — only the full hash matches.
+  keyPrefix  String
+  label      String    @default("Default")
+  revokedAt  DateTime? @db.Timestamptz(3)
+  lastUsedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now())
+
+  usageEvents ApiUsageEvent[]
 }
 
 // One row per successful (API-key-authenticated) call to a public
@@ -89,6 +114,11 @@ model ApiUsageEvent {
   id         String   @id @default(cuid())
   businessId String
   business   Business @relation(fields: [businessId], references: [id])
+  // Which multi-key row authenticated the call, when known. NULL for calls
+  // made with a legacy single-column key (Business.apiKeyHash) — those still
+  // count toward the business total, just without per-key attribution.
+  businessApiKeyId String?
+  businessApiKey   BusinessApiKey? @relation(fields: [businessApiKeyId], references: [id])
   timestamp  DateTime @default(now())
 }
 
@@ -104,7 +134,10 @@ model Credential {
   // already-abandoned testnet data on prior contract addresses, so reading
   // as immediately "expired" is accurate enough. Every row minted from here
   // on always sets a real computed value explicitly (see markVerified).
-  expiresAt       DateTime @default(now())
+  // Compared against live time on every read (see toCredentialDTO), so this
+  // must be an unambiguous instant — hence timestamptz, not naive timestamp.
+  // Display-only dates (issuedAt/verifiedAt/createdAt) stay naive TIMESTAMP.
+  expiresAt       DateTime @default(now()) @db.Timestamptz(3)
   // Which verification record this credential was issued for. The UNIQUE
   // constraint is the database-level duplicate-mint guard: at most one
   // credential row may ever reference a record, so two concurrent issuance
@@ -113,4 +146,49 @@ model Credential {
   // NULL for rows minted before this column existed.
   verificationRecordId String?             @unique
   verificationRecord   VerificationRecord? @relation(fields: [verificationRecordId], references: [id])
+}
+
+// Third-party SDK clients (manual registration for v1 — no self-serve UI).
+// Fully separate from student (User) and business (Business/API-key) tables:
+// a client row identifies a relying application, never a student, and SDK
+// codes/assertions never intersect API-key auth.
+model SdkClient {
+  id               String   @id @default(cuid())
+  // Public identifier (e.g. sp_client_...). Raw client secrets are shown
+  // once at manual registration; only the SHA-256 hash is ever persisted —
+  // the same discipline as business API keys.
+  clientId         String   @unique
+  clientSecretHash String
+  name             String
+  // Exact-match allowlist for redirect_uri validation. Stored as native
+  // Postgres TEXT[]; every authorize/token call must match one entry
+  // byte-for-byte (production: https only, localhost only in development).
+  redirectUris     String[]
+  createdAt        DateTime @default(now())
+
+  authCodes SdkAuthCode[]
+}
+
+// Single-use authorization codes for the SDK code flow (M2/M3 endpoints).
+// Only the SHA-256 hash is persisted; the raw code travels once in a
+// same-redirect 302. Redemption must be atomic (single conditional write)
+// so concurrent token calls cannot both consume one code.
+model SdkAuthCode {
+  id            String    @id @default(cuid())
+  codeHash      String    @unique
+  clientId      String
+  client        SdkClient @relation(fields: [clientId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  // Bound at issuance: the token call must present the identical URI.
+  redirectUri   String
+  // PKCE S256 challenge (base64url of SHA-256 over the verifier).
+  codeChallenge String
+  // Instant-valued columns compared against live time (expiry gate + atomic
+  // redemption guard) must be unambiguous: timestamptz stores the absolute
+  // instant regardless of app/database session timezones. Display-only
+  // createdAt stays naive TIMESTAMP.
+  expiresAt     DateTime @db.Timestamptz(3)
+  usedAt        DateTime? @db.Timestamptz(3)
+  createdAt     DateTime  @default(now())
 }

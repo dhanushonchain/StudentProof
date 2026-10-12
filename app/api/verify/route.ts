@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
 
     // Never let a logging failure break the actual response it's logging.
     // Redacted like chain errors: Prisma failures can embed the DB host.
-    logApiUsage(business.id).catch((error) =>
+    logApiUsage(business.id, business.apiKeyId).catch((error) =>
       console.error("[Verify] Failed to log API usage:", safeChainErrorLog(error))
     );
 

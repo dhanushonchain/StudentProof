@@ -34,5 +34,5 @@
     "**/*.mts"
   ],
 
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "packages/studentproof-verify/src/index.test.ts", "packages/studentproof-oauth/src/index.test.ts", "packages/studentproof-oauth/src/server.ts"]
 }

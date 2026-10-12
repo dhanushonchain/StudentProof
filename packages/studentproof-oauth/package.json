@@ -1,0 +1,22 @@
+{
+  "name": "@studentproof/oauth",
+  "version": "0.1.0",
+  "description": "Walletless Sign in with StudentProof: authorize-URL builders, server-side code exchange, and Ed25519 assertion verification. NOT published to npm — install from source until a release is cut.",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./server": "./dist/server.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "../../node_modules/.bin/tsc -p tsconfig.test.json",
+    "test": "node --test src/index.test.ts"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

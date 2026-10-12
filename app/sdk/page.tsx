@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { TopAccessNav } from "@/components/nav-bar/nav-bar";
-import { SdkAccessPanel, SdkEndpointDocs } from "./sdk-content";
+import DeveloperKeysPanel from "./DeveloperKeysPanel";
+import { SdkAccessPanel, SdkEndpointDocs, SdkOAuthDocs } from "./sdk-content";
 
 const CREAM = "#E1E0CC";
 const BG = "#050608";
@@ -57,14 +58,24 @@ export default async function SDKPage() {
                   Verify a student, no install required
                 </h1>
                 <p className="text-base leading-8" style={{ color: `${CREAM}85` }}>
-                  There is no client library to install yet — v1 of the StudentProof SDK is a single
-                  HTTP endpoint, gated by an API key. Any backend, frontend, or script can call it
-                  directly to check whether a wallet holds an active, non-expired StudentProof credential.
+                  Two integrations, no wallets required anywhere: the wallet-based verification
+                  endpoint below, and walletless{" "}
+                  <span style={{ color: CREAM }}>Sign in with StudentProof</span> further down —
+                  students identify with Google on StudentProof, and your app receives a signed
+                  true/false result. Source-available clients live in{" "}
+                  <code style={{ color: CREAM }}>packages/studentproof-verify</code> and{" "}
+                  <code style={{ color: CREAM }}>packages/studentproof-oauth</code> (not published
+                  to npm yet — install from source).
                 </p>
               </div>
 
               {/* Get API Access */}
               <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
+
+              {/* Self-serve key management for signed-in developers */}
+              {businessId && <DeveloperKeysPanel />}
+
+              <SdkOAuthDocs />
 
               <SdkEndpointDocs />
             </div>

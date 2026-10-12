@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "incremental": false,
+    "allowJs": false,
+    "plugins": [],
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": [
+    "src/index.ts",
+    "src/server.ts"
+  ],
+  "files": [
+    "src/index.ts",
+    "src/server.ts"
+  ]
+}

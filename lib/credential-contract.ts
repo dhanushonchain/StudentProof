@@ -53,6 +53,25 @@ const STUDENT_CREDENTIAL_REGISTRY_ABI = [
 
 const publicClient = createPublicClient({ chain: avalancheFuji, transport: http(RPC_URL) });
 
+// ISOLATED-TEST seam for hasValidCredential (mocked chain reads in automated
+// tests — ordinary tests must never generate chain traffic).
+//
+// Activation requires BOTH: STUDENTPROOF_STUB_CREDENTIALS=valid|invalid|error
+// AND a non-production runtime (NODE_ENV=production and Vercel
+// production/preview both disable it, regardless of the flag). "error" throws
+// so callers exercise their fail-closed paths. Every activation logs a loud
+// warning so a stub can never silently masquerade as a real chain read.
+function stubbedCredentialResult(): boolean | null {
+  const mode = process.env.STUDENTPROOF_STUB_CREDENTIALS;
+  if (mode !== "valid" && mode !== "invalid" && mode !== "error") return null;
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview") {
+    return null;
+  }
+  console.warn(`[Credential] STUBBED credential read (${mode}) — isolated testing only, never production.`);
+  if (mode === "error") throw new Error("stubbed credential outage (STUDENTPROOF_STUB_CREDENTIALS=error)");
+  return mode === "valid";
+}
+
 export async function mintStudentCredential({
   studentAddress,
   providerId,
@@ -131,6 +150,9 @@ export async function mintStudentCredential({
 // public GET /api/verify endpoint that lets any third party check a
 // wallet's credential status without installing anything.
 export async function hasValidCredential(walletAddress: Address): Promise<boolean> {
+  const stub = stubbedCredentialResult();
+  if (stub !== null) return stub;
+
   if (!STUDENT_CREDENTIAL_REGISTRY_ADDRESS) {
     throw new Error("STUDENT_CREDENTIAL_REGISTRY_ADDRESS environment variable is not set");
   }

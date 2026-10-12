@@ -7,7 +7,7 @@ import { prisma } from "./prisma";
 
 const API_KEY_PREFIX = "sp_live_";
 
-function hashApiKey(rawKey: string): string {
+export function hashApiKey(rawKey: string): string {
   return crypto.createHash("sha256").update(rawKey).digest("hex");
 }
 
@@ -70,20 +70,55 @@ export async function findOrCreateBusinessForGoogleSignIn({
   }
 }
 
+export type AuthenticatedBusiness = BusinessDTO & {
+  // Which multi-key row authenticated the call, when the caller used one.
+  // Undefined for legacy single-column keys (Business.apiKeyHash). Used for
+  // per-key usage attribution — never for rate-limit identity, which stays
+  // the stable business id.
+  apiKeyId?: string;
+};
+
 // Called on every incoming request to a key-gated endpoint. Returns null for
-// a missing/malformed/unknown key — callers should treat that as 401, not
-// distinguish "malformed" from "unknown" (no information leak either way).
-export async function authenticateApiKey(rawKey: string): Promise<BusinessDTO | null> {
+// a missing/malformed/unknown/revoked key — callers should treat that as 401,
+// not distinguish "malformed" from "unknown" (no information leak either
+// way). Checks the multi-key table first (active keys only), then the legacy
+// single-column hash for backward compatibility with pre-existing keys.
+export async function authenticateApiKey(rawKey: string): Promise<AuthenticatedBusiness | null> {
   if (!rawKey.startsWith(API_KEY_PREFIX)) return null;
 
-  const business = await prisma.business.findUnique({ where: { apiKeyHash: hashApiKey(rawKey) } });
+  const keyHash = hashApiKey(rawKey);
+  const managed = await prisma.businessApiKey.findUnique({
+    where: { keyHash },
+    include: { business: true },
+  });
+  if (managed) {
+    if (managed.revokedAt) return null;
+    const { business } = managed;
+    return {
+      id: business.id,
+      name: business.name,
+      email: business.email,
+      createdAt: business.createdAt.toISOString(),
+      apiKeyId: managed.id,
+    };
+  }
+
+  const business = await prisma.business.findUnique({ where: { apiKeyHash: keyHash } });
   if (!business) return null;
 
   return { id: business.id, name: business.name, email: business.email, createdAt: business.createdAt.toISOString() };
 }
 
 // Fire-and-forget from the caller's perspective — a logging failure must
-// never fail the actual verification response it's logging.
-export async function logApiUsage(businessId: string): Promise<void> {
-  await prisma.apiUsageEvent.create({ data: { businessId } });
+// never fail the actual verification response it's logging. When the call
+// was authenticated with a multi-key row, its id is recorded for per-key
+// usage attribution and its last-used timestamp is touched.
+export async function logApiUsage(businessId: string, apiKeyId?: string): Promise<void> {
+  await prisma.apiUsageEvent.create({ data: { businessId, businessApiKeyId: apiKeyId ?? null } });
+  if (apiKeyId) {
+    await prisma.businessApiKey.update({
+      where: { id: apiKeyId },
+      data: { lastUsedAt: new Date() },
+    });
+  }
 }
