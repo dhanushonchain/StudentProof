@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyStudentAssertion = verifyStudentAssertion;
 // Server-only assertion verification (Node 18+). Import from
 // "@studentproof/sdk/server" (or ./dist/server.js) — never from browser
 // bundles: this module statically imports node:crypto.
@@ -9,8 +6,8 @@ exports.verifyStudentAssertion = verifyStudentAssertion;
 // boolean result: { valid } is true ONLY for a fully-verified assertion
 // whose vb claim is true. Every other outcome throws — including
 // operational failures, so they can never degrade into { valid: false }.
-const node_crypto_1 = require("node:crypto");
-const index_js_1 = require("./index.js");
+import { createPublicKey, verify } from "node:crypto";
+import { DEFAULT_BASE_URL, DEFAULT_TIMEOUT_MS, InvalidAssertionError, VerificationUnavailableError, } from "./index.js";
 const ASSERTION_SKEW_SEC = 60;
 async function fetchJwks(jwksUrl, fetchImpl, timeoutMs) {
     const controller = new AbortController();
@@ -18,25 +15,25 @@ async function fetchJwks(jwksUrl, fetchImpl, timeoutMs) {
     try {
         const res = await fetchImpl(jwksUrl, { signal: controller.signal });
         if (!res.ok)
-            throw new index_js_1.VerificationUnavailableError(res.status);
+            throw new VerificationUnavailableError(res.status);
         const body = (await res.json().catch(() => null));
         if (!body || !Array.isArray(body.keys))
-            throw new index_js_1.VerificationUnavailableError(res.status);
+            throw new VerificationUnavailableError(res.status);
         return body.keys;
     }
     catch (error) {
-        if (error instanceof index_js_1.VerificationUnavailableError)
+        if (error instanceof VerificationUnavailableError)
             throw error;
-        throw new index_js_1.VerificationUnavailableError();
+        throw new VerificationUnavailableError();
     }
     finally {
         clearTimeout(timer);
     }
 }
-async function verifyStudentAssertion(options) {
+export async function verifyStudentAssertion(options) {
     const { assertion, expectedAud, expectedIss } = options;
     const fail = () => {
-        throw new index_js_1.InvalidAssertionError();
+        throw new InvalidAssertionError();
     };
     if (typeof assertion !== "string")
         fail();
@@ -44,9 +41,9 @@ async function verifyStudentAssertion(options) {
     if (parts.length !== 4 || parts[0] !== "v2" || !parts[1] || !parts[2] || !parts[3])
         fail();
     const [, kid, payloadB64, sigB64] = parts;
-    const timeoutMs = options.timeoutMs ?? index_js_1.DEFAULT_TIMEOUT_MS;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const fetchImpl = options.fetchImpl ?? fetch.bind(globalThis);
-    const base = (options.baseUrl ?? index_js_1.DEFAULT_BASE_URL).replace(/\/+$/, "");
+    const base = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     const jwksUrl = options.jwksUrl ?? `${base}/api/sdk/jwks`;
     const select = (keys) => keys.find((k) => k?.kid === kid && k?.kty === "OKP" && k?.crv === "Ed25519" && typeof k?.x === "string");
     // Rotation overlap: re-read the document once before concluding the kid
@@ -58,7 +55,7 @@ async function verifyStudentAssertion(options) {
         fail();
     let publicKey;
     try {
-        publicKey = (0, node_crypto_1.createPublicKey)({ key: { kty: "OKP", crv: "Ed25519", x: entry.x }, format: "jwk" });
+        publicKey = createPublicKey({ key: { kty: "OKP", crv: "Ed25519", x: entry.x }, format: "jwk" });
     }
     catch {
         fail();
@@ -70,7 +67,7 @@ async function verifyStudentAssertion(options) {
     catch {
         fail();
     }
-    const authentic = (0, node_crypto_1.verify)(null, Buffer.from(`sp-sdk-assertion-v2.${kid}.${payloadB64}`, "utf8"), publicKey, sig);
+    const authentic = verify(null, Buffer.from(`sp-sdk-assertion-v2.${kid}.${payloadB64}`, "utf8"), publicKey, sig);
     if (!authentic)
         fail();
     let payload;

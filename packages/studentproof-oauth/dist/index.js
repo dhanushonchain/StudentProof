@@ -1,4 +1,3 @@
-"use strict";
 // Walletless Sign in with StudentProof — browser-safe entry.
 //
 // Flow (wallets never appear anywhere here):
@@ -20,17 +19,11 @@
 // verifier MUST be the exact string behind the challenge. This module keeps
 // no session state — store pending { state, verifier } server-side yourself
 // (signed httpOnly cookie or server store) with a short TTL.
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.InvalidAssertionError = exports.VerificationUnavailableError = exports.RateLimitedError = exports.InvalidRequestError = exports.InvalidGrantError = exports.InvalidClientError = exports.StudentProofOAuthError = exports.DEFAULT_TIMEOUT_MS = exports.DEFAULT_BASE_URL = void 0;
-exports.buildAuthorizeUrl = buildAuthorizeUrl;
-exports.generateState = generateState;
-exports.createPkcePair = createPkcePair;
-exports.exchangeAuthorizationCode = exchangeAuthorizationCode;
-exports.DEFAULT_BASE_URL = "https://studentproof.app";
-exports.DEFAULT_TIMEOUT_MS = 10000;
+export const DEFAULT_BASE_URL = "https://studentproof.app";
+export const DEFAULT_TIMEOUT_MS = 10000;
 // Builds the StudentProof authorize URL. Pure string assembly — throws on
 // malformed inputs rather than producing a subtly wrong URL.
-function buildAuthorizeUrl(options) {
+export function buildAuthorizeUrl(options) {
     const { clientId, redirectUri, state, codeChallenge } = options;
     if (typeof clientId !== "string" || clientId.length === 0)
         throw new StudentProofOAuthError("client_id is required.", { code: "invalid_option" });
@@ -43,7 +36,7 @@ function buildAuthorizeUrl(options) {
     const mode = options.mode ?? "signin";
     if (mode !== "signin" && mode !== "signup")
         throw new StudentProofOAuthError("mode must be signin or signup.", { code: "invalid_option" });
-    const base = (options.baseUrl ?? exports.DEFAULT_BASE_URL).replace(/\/+$/, "");
+    const base = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     const query = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
@@ -70,17 +63,17 @@ function base64Url(bytes) {
 }
 // Per-attempt random state (CSRF protection). Store it server-side alongside
 // the verifier and require an exact match on callback.
-function generateState() {
+export function generateState() {
     return base64Url(webCrypto().getRandomValues(new Uint8Array(16)));
 }
 // PKCE S256 pair: challenge = BASE64URL(SHA256(ascii_verifier)). Follows the
 // provider's verifier alphabet/length rules (43–128 chars).
-async function createPkcePair() {
+export async function createPkcePair() {
     const verifier = base64Url(webCrypto().getRandomValues(new Uint8Array(32)));
     const digest = await webCrypto().subtle.digest("SHA-256", new TextEncoder().encode(verifier));
     return { verifier, challenge: base64Url(new Uint8Array(digest)) };
 }
-class StudentProofOAuthError extends Error {
+export class StudentProofOAuthError extends Error {
     constructor(message, opts = {}) {
         super(message);
         this.name = "StudentProofOAuthError";
@@ -88,54 +81,47 @@ class StudentProofOAuthError extends Error {
         this.code = opts.code ?? "request_failed";
     }
 }
-exports.StudentProofOAuthError = StudentProofOAuthError;
-class InvalidClientError extends StudentProofOAuthError {
+export class InvalidClientError extends StudentProofOAuthError {
     constructor() {
         super("Invalid client_id or client_secret (HTTP 401).", { status: 401, code: "invalid_client" });
         this.name = "InvalidClientError";
     }
 }
-exports.InvalidClientError = InvalidClientError;
-class InvalidGrantError extends StudentProofOAuthError {
+export class InvalidGrantError extends StudentProofOAuthError {
     constructor() {
         super("Authorization code rejected: unknown, expired, replayed, unbound, or PKCE mismatch (HTTP 400).", { status: 400, code: "invalid_grant" });
         this.name = "InvalidGrantError";
     }
 }
-exports.InvalidGrantError = InvalidGrantError;
-class InvalidRequestError extends StudentProofOAuthError {
+export class InvalidRequestError extends StudentProofOAuthError {
     constructor() {
         super("Malformed token request (HTTP 400).", { status: 400, code: "invalid_request" });
         this.name = "InvalidRequestError";
     }
 }
-exports.InvalidRequestError = InvalidRequestError;
-class RateLimitedError extends StudentProofOAuthError {
+export class RateLimitedError extends StudentProofOAuthError {
     constructor(retryAfterSec) {
         super("StudentProof rate limit exceeded (HTTP 429). Back off and retry.", { status: 429, code: "rate_limited" });
         this.name = "RateLimitedError";
         this.retryAfterSec = retryAfterSec;
     }
 }
-exports.RateLimitedError = RateLimitedError;
 // Fail-closed signal: the verification outcome is UNKNOWN (chain/RPC outage,
 // JWKS unreachable, timeout, network failure). Callers must NOT treat this
 // as unverified-and-grant or as { valid: false } — deny the gated action or
 // retry later.
-class VerificationUnavailableError extends StudentProofOAuthError {
+export class VerificationUnavailableError extends StudentProofOAuthError {
     constructor(status = null) {
         super("StudentProof verification unavailable — fail closed, do not grant access.", { status, code: "verification_unavailable" });
         this.name = "VerificationUnavailableError";
     }
 }
-exports.VerificationUnavailableError = VerificationUnavailableError;
-class InvalidAssertionError extends StudentProofOAuthError {
+export class InvalidAssertionError extends StudentProofOAuthError {
     constructor() {
         super("Assertion rejected: bad shape, signature, issuer, audience, or lifetime.", { code: "invalid_assertion" });
         this.name = "InvalidAssertionError";
     }
 }
-exports.InvalidAssertionError = InvalidAssertionError;
 function parseRetryAfter(value) {
     if (!value)
         return null;
@@ -146,14 +132,14 @@ function parseRetryAfter(value) {
 // success is the raw assertion for verifyStudentAssertion (see server.js) —
 // never a boolean, so callers cannot mistake transport success for verified
 // status.
-async function exchangeAuthorizationCode(options) {
+export async function exchangeAuthorizationCode(options) {
     const { code, redirectUri, clientId, clientSecret, codeVerifier } = options;
     if (!code || !redirectUri || !clientId || !clientSecret || !codeVerifier) {
         throw new InvalidRequestError();
     }
-    const timeoutMs = options.timeoutMs ?? exports.DEFAULT_TIMEOUT_MS;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const fetchImpl = options.fetchImpl ?? fetch.bind(globalThis);
-    const base = (options.baseUrl ?? exports.DEFAULT_BASE_URL).replace(/\/+$/, "");
+    const base = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let res;
