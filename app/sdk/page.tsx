@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { TopAccessNav } from "@/components/nav-bar/nav-bar";
 import DeveloperKeysPanel from "./DeveloperKeysPanel";
+import DeveloperOAuthPanel from "./DeveloperOAuthPanel";
 import { SdkAccessPanel, SdkEndpointDocs, SdkOAuthDocs } from "./sdk-content";
 
 const CREAM = "#E1E0CC";
@@ -35,11 +36,17 @@ export default async function SDKPage() {
             <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
               SDK
             </p>
-            <nav className="space-y-1 text-sm" style={{ color: `${CREAM}55` }}>
-              <p className="rounded-lg px-3 py-2.5" style={{ background: `${CREAM}10`, color: CREAM }}>
-                Verify a credential
-              </p>
-            </nav>
+             <nav className="space-y-1 text-sm" style={{ color: `${CREAM}55` }}>
+               <a href="#api-keys" className="block rounded-lg px-3 py-2.5 hover:opacity-80" style={{ color: `${CREAM}90` }}>
+                 API keys
+               </a>
+               <a href="#oauth-apps" className="block rounded-lg px-3 py-2.5 hover:opacity-80" style={{ color: `${CREAM}90` }}>
+                 OAuth applications
+               </a>
+               <a href="#docs" className="block rounded-lg px-3 py-2.5 hover:opacity-80" style={{ color: `${CREAM}90` }}>
+                 Documentation
+               </a>
+             </nav>
             <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
               StudentProof © 2025
             </div>
@@ -64,16 +71,23 @@ export default async function SDKPage() {
                   students identify with Google on StudentProof, and your app receives a signed
                   true/false result. Source-available clients live in{" "}
                   <code style={{ color: CREAM }}>packages/studentproof-verify</code> and{" "}
-                  <code style={{ color: CREAM }}>packages/studentproof-oauth</code> (not published
-                  to npm yet — install from source).
+                  <code style={{ color: CREAM }}>packages/studentproof-oauth</code>, published
+                  as <code style={{ color: CREAM }}>@studentproof/sdk</code> on npm.
                 </p>
               </div>
 
               {/* Get API Access */}
               <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
 
-              {/* Self-serve key management for signed-in developers */}
-              {businessId && <DeveloperKeysPanel />}
+              <div id="api-keys">
+                {/* Self-serve key management for signed-in developers */}
+                {businessId && <DeveloperKeysPanel />}
+              </div>
+
+              <div id="oauth-apps">
+                {/* Sign-in with StudentProof — register OAuth applications */}
+                <DeveloperOAuthPanel businessId={businessId} />
+              </div>
 
               <SdkOAuthDocs />
 
