@@ -89,9 +89,8 @@ export function parseAndValidateCallbackUrls(raw: unknown, env: RedirectEnv = "d
     if (uri.length > REDIRECT_URI_MAX_LENGTH) {
       throw new Error(`Callback URL exceeds max length of ${REDIRECT_URI_MAX_LENGTH} characters.`);
     }
-    let parsed: URL;
     try {
-      parsed = new URL(uri);
+      void new URL(uri);
     } catch {
       throw new Error(`Invalid callback URL: "${uri}".`);
     }

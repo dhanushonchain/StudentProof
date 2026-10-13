@@ -5,9 +5,11 @@ code exchange, and Ed25519 assertion verification. No Google client of your
 own, no wallet addresses, no blockchain libraries. Node 18+; URL builders
 also run in browsers. Zero dependencies.
 
-> **Intended public package: `@studentproof/sdk`.** npm installation is upcoming
-> and currently unavailable until an official release is published. In the meantime,
-> it is source-available: vendor it from `packages/studentproof-oauth` (see below).
+**Published package: `@studentproof/sdk`** on npm. Install with:
+
+```bash
+npm install @studentproof/sdk
+```
 
 ## What it does
 
@@ -23,33 +25,16 @@ Google sign-in **identifies** the user; only the live credential check
 
 ## Install
 
-> **npm installation is upcoming / currently unavailable.** Do not attempt to run `npm install @studentproof/sdk` until an approved release is published to npm.
-
-Once officially released:
-
 ```bash
-# Upcoming release (currently unavailable on npm — do not run unprompted):
-# npm install @studentproof/sdk
-# then: import { buildAuthorizeUrl } from "@studentproof/sdk"
-#       import { verifyStudentAssertion } from "@studentproof/sdk/server"
+npm install @studentproof/sdk
 ```
 
-Source-available until then — vendor it from this repo:
+Source is also available in this repo at `packages/studentproof-oauth`. To vendor it:
 
 ```bash
-# from the studentproof repo
 cp -r packages/studentproof-oauth /path/to/your-app/vendor/
-# then import from ./vendor/studentproof-oauth/src/index.ts (browser-safe)
-# and ./vendor/studentproof-oauth/src/server.ts (Node-only verification),
-# or build first: npm run build  (emits dist/ + dist/*.d.ts)
+npm run build  # emits dist/ + dist/*.d.ts
 ```
-
-Release checklist (requires explicit approval — do not run unprompted):
-
-1. Remove `"private": true`, pick a license (currently `UNLICENSED`), bump `version`.
-2. `npm run build` — must emit `dist/index.js` + `dist/server.js` cleanly.
-3. `node --test src/index.test.ts` — all green, no network.
-4. `npm publish --access public` (scoped package; the `@studentproof` scope must allow the publishing account).
 
 ## Usage
 
@@ -62,7 +47,7 @@ secret. The secret lives **server-side only** — never in frontend code.
 stay dependency-free); this 10-line snippet is the button:
 
 ```tsx
-import { buildAuthorizeUrl, createPkcePair, generateState } from "./vendor/studentproof-oauth/src/index.ts";
+import { buildAuthorizeUrl, createPkcePair, generateState } from "@studentproof/sdk";
 
 async function startLogin() {
   const state = generateState();
@@ -88,8 +73,8 @@ denial — grant nothing). Validate `state` against your stored pending login
 (exact match, single-use, unexpired), then:
 
 ```ts
-import { exchangeAuthorizationCode } from "./vendor/studentproof-oauth/src/index.ts";
-import { verifyStudentAssertion } from "./vendor/studentproof-oauth/src/server.ts";
+import { exchangeAuthorizationCode } from "@studentproof/sdk";
+import { verifyStudentAssertion } from "@studentproof/sdk/server";
 
 const { assertion } = await exchangeAuthorizationCode({
   baseUrl: "https://studentproof.app",

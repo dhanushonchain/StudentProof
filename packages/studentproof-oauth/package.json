@@ -1,20 +1,29 @@
 {
   "name": "@studentproof/sdk",
   "version": "0.1.0",
-  "description": "The StudentProof SDK: walletless Sign in with StudentProof (authorize-URL builders, server-side code exchange) plus Ed25519 assertion verification against the provider JWKS. Source-available; published to npm only at an approved release.",
-  "private": true,
-  "license": "UNLICENSED",
+  "type": "module",
+  "description": "The StudentProof SDK: walletless Sign in with StudentProof (authorize-URL builders, server-side code exchange) plus Ed25519 assertion verification against the provider JWKS.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dhanush-devx/StudentProof.git",
+    "directory": "packages/studentproof-oauth"
+  },
+  "homepage": "https://studentproof.app/sdk",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
     "./server": "./dist/server.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "../../node_modules/.bin/tsc -p tsconfig.test.json",
-    "test": "node --test src/index.test.ts"
+    "test": "npx tsx --test src/index.test.ts"
   },
   "engines": {
     "node": ">=18"
