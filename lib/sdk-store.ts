@@ -6,9 +6,11 @@
 // Privacy: getClientByClientId deliberately excludes clientSecretHash, and
 // no function here logs anything — callers log ids and outcomes only.
 
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { prisma } from "./prisma";
 import { buildCodeRecord, type SdkCodeRecord, type SdkCodeStore } from "./sdk-codes";
+import { generateClientSecret, sha256Hex } from "./sdk-crypto";
+import { toOAuthClientDTO, type DeveloperOAuthClientDTO } from "./sdk-client-policy";
 
 export type SdkClientPublic = {
   id: string;
@@ -20,9 +22,15 @@ export type SdkClientPublic = {
 export async function getSdkClientByClientId(clientId: string): Promise<SdkClientPublic | null> {
   const client = await prisma.sdkClient.findUnique({
     where: { clientId },
-    select: { id: true, clientId: true, name: true, redirectUris: true },
+    select: { id: true, clientId: true, name: true, redirectUris: true, revokedAt: true },
   });
-  return client;
+  if (!client || client.revokedAt) return null;
+  return {
+    id: client.id,
+    clientId: client.clientId,
+    name: client.name,
+    redirectUris: client.redirectUris,
+  };
 }
 
 export async function findSdkUserByWallet(walletAddress: string): Promise<{ id: string } | null> {
@@ -40,8 +48,168 @@ export async function getSdkUserWallet(userId: string): Promise<{ address: strin
 // callers compare without ever loading names, URIs, or other client fields
 // alongside it — and the raw secret, of course, exists nowhere to load.
 export async function getSdkClientSecretHash(clientDbId: string): Promise<string | null> {
-  const client = await prisma.sdkClient.findUnique({ where: { id: clientDbId }, select: { clientSecretHash: true } });
-  return client?.clientSecretHash ?? null;
+  const client = await prisma.sdkClient.findUnique({
+    where: { id: clientDbId },
+    select: { clientSecretHash: true, revokedAt: true },
+  });
+  if (!client || client.revokedAt) return null;
+  return client.clientSecretHash;
+}
+
+export function generateRandomClientId(): string {
+  return `sp_client_${randomBytes(16).toString("hex")}`;
+}
+
+export async function listSdkClientsForBusiness(businessId: string): Promise<DeveloperOAuthClientDTO[]> {
+  const rows = await prisma.sdkClient.findMany({
+    where: { businessId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      clientId: true,
+      name: true,
+      websiteUrl: true,
+      redirectUris: true,
+      revokedAt: true,
+      createdAt: true,
+    },
+  });
+  return rows.map(toOAuthClientDTO);
+}
+
+export async function createSdkClientForBusiness(args: {
+  businessId: string;
+  name: string;
+  websiteUrl: string;
+  redirectUris: string[];
+}): Promise<{ client: DeveloperOAuthClientDTO; secret: string }> {
+  const clientId = generateRandomClientId();
+  const rawSecret = generateClientSecret();
+  const clientSecretHash = sha256Hex(rawSecret);
+
+  const row = await prisma.sdkClient.create({
+    data: {
+      clientId,
+      clientSecretHash,
+      name: args.name,
+      websiteUrl: args.websiteUrl,
+      businessId: args.businessId,
+      redirectUris: args.redirectUris,
+    },
+    select: {
+      id: true,
+      clientId: true,
+      name: true,
+      websiteUrl: true,
+      redirectUris: true,
+      revokedAt: true,
+      createdAt: true,
+    },
+  });
+
+  return { client: toOAuthClientDTO(row), secret: rawSecret };
+}
+
+export async function updateSdkClientRedirectUris(args: {
+  businessId: string;
+  id: string;
+  redirectUris?: string[];
+  websiteUrl?: string;
+}): Promise<DeveloperOAuthClientDTO | null> {
+  const existing = await prisma.sdkClient.findFirst({
+    where: {
+      businessId: args.businessId,
+      OR: [{ id: args.id }, { clientId: args.id }],
+    },
+  });
+  if (!existing) return null;
+  if (existing.revokedAt) {
+    throw new Error("Cannot update a revoked application.");
+  }
+
+  const updated = await prisma.sdkClient.update({
+    where: { id: existing.id },
+    data: {
+      ...(args.redirectUris !== undefined ? { redirectUris: args.redirectUris } : {}),
+      ...(args.websiteUrl !== undefined ? { websiteUrl: args.websiteUrl } : {}),
+    },
+    select: {
+      id: true,
+      clientId: true,
+      name: true,
+      websiteUrl: true,
+      redirectUris: true,
+      revokedAt: true,
+      createdAt: true,
+    },
+  });
+
+  return toOAuthClientDTO(updated);
+}
+
+export async function rotateSdkClientSecret(args: {
+  businessId: string;
+  id: string;
+}): Promise<{ client: DeveloperOAuthClientDTO; secret: string } | null> {
+  const existing = await prisma.sdkClient.findFirst({
+    where: {
+      businessId: args.businessId,
+      OR: [{ id: args.id }, { clientId: args.id }],
+    },
+  });
+  if (!existing) return null;
+  if (existing.revokedAt) {
+    throw new Error("Cannot rotate secrets for a revoked application.");
+  }
+
+  const newSecret = generateClientSecret();
+  const updated = await prisma.sdkClient.update({
+    where: { id: existing.id },
+    data: { clientSecretHash: sha256Hex(newSecret) },
+    select: {
+      id: true,
+      clientId: true,
+      name: true,
+      websiteUrl: true,
+      redirectUris: true,
+      revokedAt: true,
+      createdAt: true,
+    },
+  });
+
+  return { client: toOAuthClientDTO(updated), secret: newSecret };
+}
+
+export async function revokeSdkClient(args: {
+  businessId: string;
+  id: string;
+}): Promise<DeveloperOAuthClientDTO | null> {
+  const existing = await prisma.sdkClient.findFirst({
+    where: {
+      businessId: args.businessId,
+      OR: [{ id: args.id }, { clientId: args.id }],
+    },
+  });
+  if (!existing) return null;
+  if (existing.revokedAt) {
+    return toOAuthClientDTO(existing);
+  }
+
+  const updated = await prisma.sdkClient.update({
+    where: { id: existing.id },
+    data: { revokedAt: new Date() },
+    select: {
+      id: true,
+      clientId: true,
+      name: true,
+      websiteUrl: true,
+      redirectUris: true,
+      revokedAt: true,
+      createdAt: true,
+    },
+  });
+
+  return toOAuthClientDTO(updated);
 }
 
 function toCodeRecord(row: {

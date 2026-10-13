@@ -1,5 +1,5 @@
 // Server-only assertion verification (Node 18+). Import from
-// "@studentproof/oauth/server" (or ./dist/server.js) — never from browser
+// "@studentproof/sdk/server" (or ./dist/server.js) — never from browser
 // bundles: this module statically imports node:crypto.
 //
 // Verifies a v2 assertion against the provider JWKS and returns the plain
@@ -12,7 +12,7 @@ import {
   DEFAULT_TIMEOUT_MS,
   InvalidAssertionError,
   VerificationUnavailableError,
-} from "./index.ts";
+} from "./index.js";
 
 const ASSERTION_SKEW_SEC = 60;
 

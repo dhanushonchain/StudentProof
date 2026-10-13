@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { X } from "lucide-react";
 import ApiKeyReveal from "./ApiKeyReveal";
 import BusinessLoginButton from "@/app/api/auth/BusinessLoginButton";
+import CredentialsExplained from "./CredentialsExplained";
+import DeveloperKeysPanel from "./DeveloperKeysPanel";
+import DeveloperOAuthPanel from "./DeveloperOAuthPanel";
 
 const CREAM = "#E1E0CC";
+const BG = "#050608";
 
 const CURL_EXAMPLE = `curl "https://studentproof.app/api/verify?wallet=0xYourStudentWalletAddress" \\
   -H "x-api-key: sp_live_your_api_key"`;
@@ -64,6 +71,53 @@ const CodeBlock = ({ children }: { children: string }) => (
   </pre>
 );
 
+/* ---------------- SDK overview (shared by /sdk page and docs modal) ---------------- */
+export function SdkOverviewPanel() {
+  return (
+    <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
+        SDK
+      </p>
+      <h1
+        className="mb-6 text-[clamp(2.2rem,4vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.04em]"
+        style={{ color: CREAM }}
+      >
+        Verify a student, no install required
+      </h1>
+      <p className="mb-4 text-base leading-8" style={{ color: `${CREAM}85` }}>
+        StudentProof supports two distinct integrations, both fully zero-knowledge with no wallets required for end users:
+      </p>
+      <div className="space-y-3 text-sm leading-7" style={{ color: `${CREAM}85` }}>
+        <div className="flex items-start gap-2.5">
+          <span className="font-bold" style={{ color: CREAM }}>
+            •
+          </span>
+          <div>
+            <strong className="text-white">Wallet-based credential verification:</strong> Query the existing{" "}
+            <code style={{ color: CREAM }}>/api/verify</code> endpoint using your{" "}
+            <code style={{ color: CREAM }}>sp_live_...</code> API key to verify whether a given crypto wallet
+            holds an active, non-expired StudentProof credential.
+          </div>
+        </div>
+        <div className="flex items-start gap-2.5">
+          <span className="font-bold" style={{ color: CREAM }}>
+            •
+          </span>
+          <div>
+            <strong className="text-white">Walletless “Sign in with StudentProof”:</strong> Allow students to
+            prove student status via Google authentication using the OAuth application registration panel below
+            and the intended client library <code style={{ color: CREAM }}>@studentproof/sdk</code>. Please note
+            that public npm installation is{" "}
+            <span style={{ color: "#F0A3A3" }}>upcoming and currently unavailable</span> until the package is
+            published to npm; repository developers can vendor the source code directly from{" "}
+            <code style={{ color: CREAM }}>packages/studentproof-oauth</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Access panel (shared by /sdk page and docs modal) ---------------- */
 export function SdkAccessPanel({
   businessId,
@@ -73,7 +127,7 @@ export function SdkAccessPanel({
   freshApiKey?: string | null;
 }) {
   return (
-    <div className="rounded-2xl p-10 text-center" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+    <div id="api-access" className="rounded-2xl p-10 text-center" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
       {freshApiKey ? (
         <>
           <h2 className="text-lg font-semibold" style={{ color: CREAM }}>
@@ -120,7 +174,7 @@ export function SdkAccessPanel({
 /* ---------------- Endpoint docs (shared by /sdk page and docs modal) ---------------- */
 export function SdkEndpointDocs() {  return (
     <>
-      <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <div id="wallet-verification" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
         <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
           What this API does
         </h2>
@@ -268,17 +322,16 @@ const { assertion, expires_in } = await res.json();
 export function SdkOAuthDocs() {
   return (
     <>
-      <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <div id="oauth-flow" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
         <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
           Sign in with StudentProof
         </h2>
         <p className="mb-4 text-sm" style={{ color: `${CREAM}85` }}>
           Let students prove their status without sharing wallets or emails — and without
           your own Google OAuth client: StudentProof owns Google sign-in, and students
-          never enter a wallet address anywhere. Register a client to get a{" "}
-          <code style={{ color: CREAM }}>client_id</code> (contact the StudentProof team —
-          v1 registration is manual), then redirect to{" "}
-          <code style={{ color: CREAM }}>/sdk/connect</code> with PKCE S256. The student consents
+          never enter a wallet address anywhere. Register an application in the “Sign in with StudentProof”
+          section above to get your <code style={{ color: CREAM }}>client_id</code> and client secret,
+          then redirect to <code style={{ color: CREAM }}>/sdk/connect</code> with PKCE S256. The student consents
           to sharing one fact only — whether they hold an active credential — and your{" "}
           <code style={{ color: CREAM }}>redirect_uri</code> receives a one-time code.
         </p>
@@ -292,7 +345,7 @@ export function SdkOAuthDocs() {
         <CodeBlock>{AUTHORIZE_EXAMPLE}</CodeBlock>
       </div>
 
-      <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <div id="oauth-token-exchange" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
         <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
           Exchange the code
         </h2>
@@ -305,6 +358,32 @@ export function SdkOAuthDocs() {
         <CodeBlock>{TOKEN_EXAMPLE}</CodeBlock>
       </div>
 
+      <div id="oauth-package" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+        <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
+          Client package: @studentproof/sdk
+        </h2>
+        <p className="mb-4 text-sm leading-7" style={{ color: `${CREAM}85` }}>
+          The walletless sign-in flow can be integrated using standard HTTP requests (as shown above) or via
+          the client package <code style={{ color: CREAM }}>@studentproof/sdk</code>, which provides helper utilities
+          for building authorize URLs, generating PKCE challenges, and verifying Ed25519 JWKS assertions server-side.
+        </p>
+        <div
+          className="rounded-xl p-4 text-xs leading-6"
+          style={{ background: "#09090B", border: `1px solid ${CREAM}20`, color: `${CREAM}80` }}
+        >
+          <p className="font-semibold text-white mb-1">
+            📦 Package availability notice
+          </p>
+          <p>
+            The intended public package name is <code className="font-mono text-white">@studentproof/sdk</code>.
+            Public installation via <code className="font-mono text-white">npm install @studentproof/sdk</code> is{" "}
+            <span style={{ color: "#F0A3A3" }} className="font-semibold">upcoming and currently unavailable</span> until
+            an official release is published to the npm registry. Repository developers can vendor the source code directly
+            from <code className="font-mono text-white">packages/studentproof-oauth</code>.
+          </p>
+        </div>
+      </div>
+
       <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
         <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
           Try the demo
@@ -312,11 +391,85 @@ export function SdkOAuthDocs() {
         <p className="text-sm leading-7" style={{ color: `${CREAM}85` }}>
           A standalone zero-dependency demo website shows the whole login: authorize URL with
           random state and PKCE, callback validation, server-side exchange, JWKS assertion
-          check, session cookie, and logout. Contact the StudentProof team for the demo source
-          and a development client — v1 registration is manual.
+          check, session cookie, and logout. Register an application above to test the demo
+          with your own client ID and client secret.
         </p>
       </div>
     </>
+  );
+}
+
+/* ---------------- Modal layout: sidebar + scrollable SDK content ---------------- */
+export function SdkModalLayout({
+  businessId,
+  freshApiKey,
+  onClose,
+}: {
+  businessId?: string | null;
+  freshApiKey?: string | null;
+  onClose?: () => void;
+}) {
+  return (
+    <div className="relative flex h-full" style={{ background: BG, color: CREAM }}>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
+          aria-label="Close SDK documentation"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+      <aside
+        className="sticky top-0 flex h-full w-64 shrink-0 flex-col overflow-y-auto px-8 py-10"
+        style={{ borderRight: `1px solid ${CREAM}12` }}
+      >
+        <Link href="/" className="mb-12 inline-block group">
+          <Image
+            src="/StudentProof.svg"
+            alt="StudentProof"
+            width={311}
+            height={65}
+            priority
+            className="h-auto w-40 transition-opacity group-hover:opacity-70"
+          />
+        </Link>
+        <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
+          SDK
+        </p>
+        <nav className="space-y-1 text-sm" style={{ color: `${CREAM}55` }}>
+          <a href="#credentials-explained" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
+            Credentials explained
+          </a>
+          <a href="#api-access" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
+            API keys
+          </a>
+          <a href="#oauth-apps" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
+            OAuth applications
+          </a>
+          <a href="#oauth-flow" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
+            Sign in with StudentProof
+          </a>
+          <a href="#wallet-verification" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
+            Wallet verification API
+          </a>
+        </nav>
+        <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
+          StudentProof © 2025
+        </div>
+      </aside>
+      <section className="flex-1 overflow-y-auto px-12 py-14">
+        <div className="w-full space-y-6">
+          <SdkOverviewPanel />
+          <CredentialsExplained />
+          <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
+          {businessId && <DeveloperKeysPanel />}
+          <DeveloperOAuthPanel businessId={businessId} />
+          <SdkEndpointDocs />
+          <SdkOAuthDocs />
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -335,7 +488,7 @@ function readSessionFields(data: unknown): { businessId?: string | null; freshAp
   return { businessId, freshApiKey };
 }
 
-export function SdkModalContent() {
+export function SdkModalContent({ onClose }: { onClose?: () => void }) {
   const [state, setState] = useState<SdkSessionState>({ status: "loading" });
 
   useEffect(() => {
@@ -348,8 +501,6 @@ export function SdkModalContent() {
         setState({ status: "ready", businessId, freshApiKey });
       })
       .catch(() => {
-        // Session unreadable (e.g. offline) — fall back to signed-out UI
-        // rather than blocking the docs.
         if (!cancelled) setState({ status: "ready" });
       });
     return () => {
@@ -359,7 +510,7 @@ export function SdkModalContent() {
 
   if (state.status === "loading") {
     return (
-      <div className="rounded-2xl p-10 text-center" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+      <div className="flex h-full items-center justify-center" style={{ background: BG, color: CREAM }}>
         <p className="text-sm" style={{ color: `${CREAM}85` }}>
           Loading…
         </p>
@@ -368,9 +519,10 @@ export function SdkModalContent() {
   }
 
   return (
-    <>
-      <SdkAccessPanel businessId={state.businessId} freshApiKey={state.freshApiKey} />
-      <SdkEndpointDocs />
-    </>
+    <SdkModalLayout
+      businessId={state.businessId}
+      freshApiKey={state.freshApiKey}
+      onClose={onClose}
+    />
   );
 }

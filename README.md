@@ -174,9 +174,7 @@ valid: bool = resp.json()["valid"]
 
 Calls are rate-limited to 60 requests per minute per developer account (sliding window shared across instances via Valkey). Exceeding the limit returns `429` with a `Retry-After` header; if the limiter is unavailable the API fails closed with `503`. Only a boolean is returned; no student data is exposed.
 
-Keys are managed self-serve on `/sdk` (Google sign-in): the first key is shown once and emailed (only its hash is stored); further keys can be created, listed (creation date, status, per-key and account-level usage), and revoked at any time — revoked keys return `401` immediately. Secrets cannot be recovered; revoke and recreate if lost.
-
-A typed, dependency-free client lives at `packages/studentproof-verify` (`verifyWallet(walletAddress)` with configurable base URL, typed responses/errors, and request timeouts). It is **not published to npm** — install from source until a release is cut (see its README). Never bundle a real API key in browser-side code.
+Keys are managed self-serve on `/sdk` (Google sign-in): the first key is shown once and emailed (only its hash is stored); further keys can be created, listed (creation date, status, per-key and account-level usage), and revoked at any time — revoked keys return `401` immediately. Secrets cannot be recovered; revoke and recreate if lost. Never bundle a real API key in browser-side code.
 
 ## Project structure
 
@@ -202,8 +200,7 @@ contracts/
   test/                     Foundry tests
   broadcast/                Fuji deployment artifacts (chain 43113)
 packages/
-  studentproof-verify/      Typed verify client (NOT published to npm): src/index.ts + node:test suite
-  studentproof-oauth/       Walletless sign-in kit (NOT published to npm): authorize-URL/PKCE builders (browser-safe src/index.ts) + server-side exchange and JWKS assertion verification (src/server.ts) + node:test suite
+  studentproof-oauth/       The public SDK, published as @studentproof/sdk: authorize-URL/PKCE builders (browser-safe src/index.ts) + server-side exchange and JWKS assertion verification (src/server.ts) + node:test suite
 lib/
   issuance-orchestrator.ts  Claim/reconcile/mint/finalize + retry entry
   issuance-policy.ts        Lifecycle states, error categories, backoff
@@ -343,8 +340,7 @@ npm run lint         # eslint over the repo
 | Dashboard-state checks | compile + run `lib/verification-ui.selfcheck.ts` | Pass |
 | Provider-shape checks | compile + run `lib/reclaim.selfcheck.ts` (dummy env, `server-only` stub) | Pass |
 | Developer-key policy checks | compile + run `lib/developer-keys-policy.selfcheck.ts` | Pass |
-| Verify SDK client tests (mocked fetch, no network) | `node --test packages/studentproof-verify/src/index.test.ts` | 11/11 pass |
-| OAuth SDK kit tests (mocked fetch, live Ed25519 vectors, no network) | `node --test packages/studentproof-oauth/src/index.test.ts` | 9/9 pass |
+| `@studentproof/sdk` kit tests (mocked fetch, live Ed25519 vectors, no network) | `node --test packages/studentproof-oauth/src/index.test.ts` | 9/9 pass |
 | SDK v1 crypto/flow checks (Ed25519 v2, PKCE, bindings, fake-store concurrency) | compile + run `lib/sdk-v1.selfcheck.ts` | Pass |
 | OAuth integration matrix (34 HTTP assertions vs isolated server + throwaway PG/Redis, stubbed chain) | throwaway driver (see Phase 2 report) | 34/34 pass |
 | OAuth outage/revocation paths (502s without consuming codes; `vb:false` truthfulness; unverified bounce) | throwaway probes vs isolated server | Pass |

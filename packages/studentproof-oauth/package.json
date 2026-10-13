@@ -1,7 +1,7 @@
 {
-  "name": "@studentproof/oauth",
+  "name": "@studentproof/sdk",
   "version": "0.1.0",
-  "description": "Walletless Sign in with StudentProof: authorize-URL builders, server-side code exchange, and Ed25519 assertion verification. NOT published to npm — install from source until a release is cut.",
+  "description": "The StudentProof SDK: walletless Sign in with StudentProof (authorize-URL builders, server-side code exchange) plus Ed25519 assertion verification against the provider JWKS. Source-available; published to npm only at an approved release.",
   "private": true,
   "license": "UNLICENSED",
   "main": "dist/index.js",

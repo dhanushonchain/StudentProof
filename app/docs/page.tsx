@@ -5,8 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { SdkModalContent } from "../sdk/sdk-content";
 import { TopAccessNav, type AccessPath } from "@/components/nav-bar/nav-bar";
-import { SdkModalContent } from "@/app/sdk/sdk-content";
 
 
 const CREAM = "#E1E0CC";
@@ -615,11 +615,7 @@ export const DocsModal = ({
           {activePath === "/docs" ? (
             <DocsContent modal onClose={onClose} />
           ) : activePath === "/sdk" ? (
-            <div className="h-full overflow-y-auto px-6 py-8 sm:px-10" style={{ background: BG, color: CREAM }}>
-              <div className="mx-auto w-full max-w-3xl space-y-6 pb-8">
-                <SdkModalContent />
-              </div>
-            </div>
+            <SdkModalContent onClose={onClose} />
           ) : (
             <PlaceholderDocsContent page={activePath} modal onClose={onClose} />
           )}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(curl -s https://studentproof.app/sdk 2 >& 1)",
+      "Shell(python3 -c  import sys sys.path.insert(0,'.') # check live page pass  2 >& 1)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

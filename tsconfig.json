@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,26 +17,29 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
-
     "plugins": [
       {
         "name": "next"
       }
     ]
   },
-
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next/dev/dev/types/**/*.ts"
   ],
-
-  "exclude": ["node_modules", "packages/studentproof-verify/src/index.test.ts", "packages/studentproof-oauth/src/index.test.ts", "packages/studentproof-oauth/src/server.ts"]
+  "exclude": [
+    "node_modules",
+    "packages/studentproof-oauth/src/index.test.ts",
+    "packages/studentproof-oauth/src/server.ts"
+  ]
 }

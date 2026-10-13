@@ -81,6 +81,7 @@ model Business {
 
   usageEvents ApiUsageEvent[]
   apiKeys     BusinessApiKey[]
+  sdkClients  SdkClient[]
 }
 
 // Self-serve developer API keys (one business → many keys). Only the
@@ -153,18 +154,22 @@ model Credential {
 // a client row identifies a relying application, never a student, and SDK
 // codes/assertions never intersect API-key auth.
 model SdkClient {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   // Public identifier (e.g. sp_client_...). Raw client secrets are shown
-  // once at manual registration; only the SHA-256 hash is ever persisted —
+  // once at registration; only the SHA-256 hash is ever persisted —
   // the same discipline as business API keys.
-  clientId         String   @unique
+  clientId         String    @unique
   clientSecretHash String
   name             String
+  websiteUrl       String?
+  businessId       String?
+  business         Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
   // Exact-match allowlist for redirect_uri validation. Stored as native
   // Postgres TEXT[]; every authorize/token call must match one entry
   // byte-for-byte (production: https only, localhost only in development).
   redirectUris     String[]
-  createdAt        DateTime @default(now())
+  revokedAt        DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now())
 
   authCodes SdkAuthCode[]
 }

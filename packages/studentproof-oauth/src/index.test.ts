@@ -1,4 +1,4 @@
-// Tests for @studentproof/oauth. No network: every case injects a mocked
+// Tests for @studentproof/sdk. No network: every case injects a mocked
 // fetchImpl. Run: `node --test src/index.test.ts` (Node 22.6+ type stripping;
 // repo runs Node 26). Ed25519 vectors are generated in-test with node:crypto
 // and verified against the live JWKS-shape fixtures below — no fixture keys
@@ -18,8 +18,8 @@ import {
   RateLimitedError,
   StudentProofOAuthError,
   VerificationUnavailableError,
-} from "./index.ts";
-import { verifyStudentAssertion } from "./server.ts";
+} from "./index.js";
+import { verifyStudentAssertion } from "./server.js";
 
 const BASE = "https://verify.test";
 const CLIENT_ID = "sp_client_demo0000000000";

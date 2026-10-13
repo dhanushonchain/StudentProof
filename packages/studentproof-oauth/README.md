@@ -1,12 +1,13 @@
-# @studentproof/oauth
+# @studentproof/sdk
 
 Walletless **Sign in with StudentProof**: authorize-URL builders, server-side
 code exchange, and Ed25519 assertion verification. No Google client of your
 own, no wallet addresses, no blockchain libraries. Node 18+; URL builders
 also run in browsers. Zero dependencies.
 
-> **Not published to npm.** Install from source until a release is cut
-> (see below). Do not claim otherwise in downstream docs.
+> **Intended public package: `@studentproof/sdk`.** npm installation is upcoming
+> and currently unavailable until an official release is published. In the meantime,
+> it is source-available: vendor it from `packages/studentproof-oauth` (see below).
 
 ## What it does
 
@@ -20,7 +21,20 @@ proof, or Google token.
 Google sign-in **identifies** the user; only the live credential check
 **determines** student status. Signing in with Google alone proves nothing.
 
-## Install (source only, for now)
+## Install
+
+> **npm installation is upcoming / currently unavailable.** Do not attempt to run `npm install @studentproof/sdk` until an approved release is published to npm.
+
+Once officially released:
+
+```bash
+# Upcoming release (currently unavailable on npm — do not run unprompted):
+# npm install @studentproof/sdk
+# then: import { buildAuthorizeUrl } from "@studentproof/sdk"
+#       import { verifyStudentAssertion } from "@studentproof/sdk/server"
+```
+
+Source-available until then — vendor it from this repo:
 
 ```bash
 # from the studentproof repo
@@ -32,10 +46,10 @@ cp -r packages/studentproof-oauth /path/to/your-app/vendor/
 
 Release checklist (requires explicit approval — do not run unprompted):
 
-1. Remove `"private": true`, pick a license, bump `version`.
+1. Remove `"private": true`, pick a license (currently `UNLICENSED`), bump `version`.
 2. `npm run build` — must emit `dist/index.js` + `dist/server.js` cleanly.
 3. `node --test src/index.test.ts` — all green, no network.
-4. `npm publish --access public` (scoped package).
+4. `npm publish --access public` (scoped package; the `@studentproof` scope must allow the publishing account).
 
 ## Usage
 
