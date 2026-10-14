@@ -28,7 +28,7 @@ export function DashNavigation({
       className={`fixed left-1/2 top-0 z-50 max-w-[calc(100vw-5.5rem)] -translate-x-1/2 sm:max-w-[calc(100vw-2rem)] ${className}`}
       onClick={(event) => event.stopPropagation()}
     >
-      <div className="relative flex h-8 items-center gap-2 rounded-b-2xl bg-black px-4 md:rounded-b-3xl md:px-8 has-[[aria-expanded=true]]:rounded-br-none">
+      <div className="relative flex h-8 items-center gap-2 rounded-b-2xl bg-black px-4 md:rounded-b-3xl md:px-8">
         <div className="no-scrollbar flex min-w-0 items-center gap-3 overflow-x-auto sm:gap-6 md:gap-12 lg:gap-14">
           {navItems.map((item) => {
             const isActive = item.section === currentSection;
