@@ -872,6 +872,18 @@ function EmptyState({
 }
 
 function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(walletPublicKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
     <section className="rounded-[2rem] border border-[#27272A] bg-[#111113] p-6 sm:p-8">
       <div className="flex flex-col gap-4">
@@ -885,13 +897,11 @@ function WalletInfoSection({ walletPublicKey }: { walletPublicKey: string }) {
             <code className="min-w-0 flex-1 break-all font-mono text-sm text-[#E1E0CC]">{walletPublicKey}</code>
             <button
               type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(walletPublicKey);
-              }}
+              onClick={copyAddress}
               className="shrink-0 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-zinc-300 hover:bg-[#17171A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
               title="Copy to clipboard"
             >
-              Copy
+              {copied ? "Copied" : "Copy"}
             </button>
           </div>
           <p className="text-xs text-zinc-500">
