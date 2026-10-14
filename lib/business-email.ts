@@ -26,6 +26,38 @@ GET https://studentproof.app/api/verify?wallet=0x...
 — The StudentProof Team`;
 }
 
+// Emails an OAuth application's client secret when it is created or rotated.
+// Same never-throws contract as sendApiKeyEmail: the secret is also shown
+// on-screen once, so a failed send must not fail the request.
+export async function sendClientSecretEmail(
+  email: string,
+  args: { appName: string; clientId: string; clientSecret: string; rotated: boolean }
+): Promise<void> {
+  try {
+    const { resend, WELCOME_FROM_ADDRESS } = await import("./resend");
+    const { error } = await resend.emails.send({
+      from: WELCOME_FROM_ADDRESS,
+      to: [email],
+      subject: `${args.rotated ? "New" : "Your"} StudentProof client secret for ${args.appName}`,
+      text: `${args.rotated ? "Your client secret was rotated. The previous secret no longer works." : "Your StudentProof application was created."}
+
+Application: ${args.appName}
+Client ID: ${args.clientId}
+Client secret: ${args.clientSecret}
+
+Keep this secret server-side only. Anyone with it can exchange authorization codes for your application. We only store a hash of it, so this email and the on-screen copy are the only places you'll see it in full.
+
+— The StudentProof Team`,
+    });
+
+    if (error) {
+      console.error("[Client secret email] Resend returned an error:", error);
+    }
+  } catch (error) {
+    console.error("[Client secret email] Failed to send:", error);
+  }
+}
+
 export async function sendApiKeyEmail(email: string, apiKey: string): Promise<void> {
   try {
     const { resend, WELCOME_FROM_ADDRESS } = await import("./resend");

@@ -73,6 +73,17 @@ export async function POST(req: NextRequest) {
       redirectUris,
     });
 
+    const email = (await auth())?.user?.email;
+    if (email) {
+      const { sendClientSecretEmail } = await import("@/lib/business-email");
+      await sendClientSecretEmail(email, {
+        appName: client.name,
+        clientId: client.clientId,
+        clientSecret: secret,
+        rotated: false,
+      });
+    }
+
     return NextResponse.json(
       {
         client,

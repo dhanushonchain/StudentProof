@@ -27,6 +27,17 @@ export async function POST(
       return NextResponse.json({ error: "Application not found." }, { status: 404 });
     }
 
+    const email = session?.user?.email;
+    if (email) {
+      const { sendClientSecretEmail } = await import("@/lib/business-email");
+      await sendClientSecretEmail(email, {
+        appName: result.client.name,
+        clientId: result.client.clientId,
+        clientSecret: result.secret,
+        rotated: true,
+      });
+    }
+
     return NextResponse.json(
       {
         client: result.client,
