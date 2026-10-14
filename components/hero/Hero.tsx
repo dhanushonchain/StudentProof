@@ -151,7 +151,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
           {/* Navbar */}
           {!showDocs ? (
             <nav className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
-              <div className="flex items-center gap-3 rounded-b-2xl bg-black px-4 py-2 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
+              <div className="relative flex h-8 items-center gap-3 rounded-b-2xl bg-black px-4 sm:gap-6 md:gap-12 md:rounded-b-3xl md:px-8 lg:gap-14">
                 {user && (
                   <Link
                     href="/dashboard"

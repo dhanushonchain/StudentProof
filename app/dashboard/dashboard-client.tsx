@@ -1,7 +1,6 @@
 "use client";
 
 import { DashNavigation, type DashSection } from "@/components/nav-bar/dash-nav-bar";
-import { ProfileMenu } from "@/components/profile-menu/profile-menu";
 import { Button } from "@/components/ui/button";
 import type { ActivityEventDTO } from "@/lib/activity-db";
 import type { CredentialDTO, VerificationDTO } from "@/lib/verification-db";
@@ -278,8 +277,9 @@ export default function DashboardClient({
       <div className="noise-overlay pointer-events-none absolute inset-0 opacity-[0.7] mix-blend-overlay" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
-      {!activeSection && <DashNavigation onSelect={setActiveSection} />}
-      <ProfileMenu user={{ name: user.name, image: user.image, email: user.email }} />
+      {!activeSection && (
+        <DashNavigation onSelect={setActiveSection} user={{ name: user.name, image: user.image, email: user.email }} />
+      )}
     </main>
   );
 }
@@ -331,7 +331,12 @@ function DashboardModal({
         style={{ backdropFilter: "blur(1px)" }}
         onClick={activeSection === "home" ? undefined : onClose}
       >
-        <DashNavigation currentSection={activeSection} onSelect={onSelect} className="z-[60]" />
+        <DashNavigation
+          currentSection={activeSection}
+          onSelect={onSelect}
+          className="z-[60]"
+          user={{ name: user.name, image: user.image, email: user.email }}
+        />
         <motion.div
           key="dash-modal-card"
           initial={{ opacity: 0, scale: 0.92, y: 24 }}
