@@ -1,53 +1,23 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 // Distinct provider id "google-business" (see auth.config.ts) — same real
 // Google OAuth client as the student login button, but a separate NextAuth
 // provider so auth.ts's jwt callback can tell the two flows apart and route
 // this one to the Business table, never the User table.
 //
-// Sign-in runs in a popup so the /sdk page never navigates away. The popup
-// lands on /sdk/login-popup-done, which notifies this window and closes
-// itself; the session cookie is shared (same origin), so a refresh picks up
-// the new business session.
-const POPUP_NAME = "sp-business-login";
-const POPUP_MESSAGE = "sp-business-login";
-const POPUP_FEATURES = "popup,width=520,height=720";
-
+// On the homepage the SDK docs modal is open, so sign-in returns there with
+// ?sdk=1 and the modal reopens in the signed-in state (see Hero.tsx). Anywhere
+// else (the standalone /sdk page) it returns to /sdk.
 export default function BusinessLoginButton() {
-  const router = useRouter();
-
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin || event.data?.type !== POPUP_MESSAGE) return;
-      router.refresh();
-    }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [router]);
-
-  async function onClick() {
-    // Open synchronously in the click handler so the browser allows it.
-    const popup = window.open("about:blank", POPUP_NAME, POPUP_FEATURES);
-    if (!popup) {
-      // Popup blocked: keep the original full-page sign-in.
-      await signIn("google-business", { callbackUrl: "/sdk" });
-      return;
-    }
-    const result = await signIn("google-business", { callbackUrl: "/sdk/login-popup-done", redirect: false });
-    if (!result?.url) {
-      popup.close();
-      return;
-    }
-    popup.location.href = result.url;
-  }
-
   return (
     <button
-      onClick={() => void onClick()}
+      onClick={() =>
+        signIn("google-business", {
+          callbackUrl: window.location.pathname === "/" ? "/?sdk=1" : "/sdk",
+        })
+      }
       className="flex w-full items-center justify-center gap-3 rounded-xl px-6 py-3 text-sm font-semibold transition hover:opacity-80"
       style={{ background: "#E1E0CC", color: "#050608" }}
     >

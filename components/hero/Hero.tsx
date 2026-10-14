@@ -2,7 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DocsModal } from "@/app/docs/page";
@@ -99,6 +99,19 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/pricing">("/docs");
+
+  // Returning from the developer sign-in (BusinessLoginButton → /?sdk=1):
+  // reopen the SDK modal in place, then drop the param so refresh stays clean.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("sdk") !== "1") return;
+    // One-time sync from the URL on mount; a lazy initializer would mismatch SSR.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDocsInitialPath("/sdk");
+    setShowDocs(true);
+    url.searchParams.delete("sdk");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, []);
 
   return (
     <>
