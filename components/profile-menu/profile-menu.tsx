@@ -52,7 +52,7 @@ export function ProfileMenu({ user, inline = false }: { user: ProfileMenuUser; i
 
   const email = user.email ? (
     <p
-      className={inline ? "min-w-0 max-w-[11rem] truncate text-xs" : "flex h-8 w-full items-center truncate px-1.5 text-xs"}
+      className={inline ? "hidden min-w-0 max-w-[11rem] truncate text-xs sm:block" : "flex h-8 w-full items-center truncate px-1.5 text-xs"}
       style={{ color: "rgba(225, 224, 204, 0.8)" }}
       title={user.email}
     >

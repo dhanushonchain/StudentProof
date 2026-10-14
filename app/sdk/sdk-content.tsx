@@ -391,7 +391,7 @@ export function SdkModalLayout({
   onClose?: () => void;
 }) {
   return (
-    <div className="relative flex h-full" style={{ background: BG, color: CREAM }}>
+    <div className="relative flex h-full flex-col md:flex-row" style={{ background: BG, color: CREAM }}>
       {onClose && (
         <button
           onClick={onClose}
@@ -402,10 +402,10 @@ export function SdkModalLayout({
         </button>
       )}
       <aside
-        className="sticky top-0 flex h-full w-64 shrink-0 flex-col overflow-y-auto px-8 py-10"
-        style={{ borderRight: `1px solid ${CREAM}12` }}
+        className="flex w-full shrink-0 flex-col overflow-y-auto px-6 py-6 md:sticky md:top-0 md:h-full md:w-64 md:px-8 md:py-10"
+        style={{ borderBottom: `1px solid ${CREAM}12` }}
       >
-        <Link href="/" className="mb-12 inline-block group">
+        <Link href="/" className="mb-6 inline-block group md:mb-12">
           <Image
             src="/StudentProof.svg"
             alt="StudentProof"
@@ -415,10 +415,10 @@ export function SdkModalLayout({
             className="h-auto w-40 transition-opacity group-hover:opacity-70"
           />
         </Link>
-        <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
+        <p className="mb-4 text-[0.7rem] uppercase tracking-[0.25em] md:mb-6" style={{ color: `${CREAM}60` }}>
           SDK
         </p>
-        <nav className="space-y-1 text-sm" style={{ color: `${CREAM}55` }}>
+        <nav className="flex flex-wrap gap-1 text-sm md:block md:space-y-1" style={{ color: `${CREAM}55` }}>
           <a href="#credentials-explained" className="block rounded-lg px-3 py-2.5 transition hover:text-white" style={{ color: `${CREAM}70` }}>
             Credentials explained
           </a>
@@ -435,11 +435,11 @@ export function SdkModalLayout({
             Wallet verification API
           </a>
         </nav>
-        <div className="mt-auto pt-10 text-xs" style={{ color: `${CREAM}30` }}>
+        <div className="mt-auto hidden pt-10 text-xs md:block" style={{ color: `${CREAM}30` }}>
           StudentProof © 2025
         </div>
       </aside>
-      <section className="flex-1 overflow-y-auto px-12 py-14">
+      <section className="min-h-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8 md:px-12 md:py-14">
         <div className="w-full space-y-6">
           <SdkOverviewPanel />
           <CredentialsExplained />
