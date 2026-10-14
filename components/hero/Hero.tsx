@@ -97,7 +97,7 @@ const navItems = [
 const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
-  const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk" | "/pricing">("/docs");
+  const [docsInitialPath, setDocsInitialPath] = useState<"/docs" | "/sdk">("/docs");
 
   // Returning from the developer sign-in (BusinessLoginButton → /?sdk=1):
   // reopen the SDK modal in place, then drop the param so refresh stays clean.
@@ -164,10 +164,10 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                   </Link>
                 )}
                 {navItems.map((item) => {
-                  // DOCS/SDK/PRICING open the in-page docs modal (same behavior
-                  // for all three) — the SDK tab renders the real SDK access
-                  // UI inside the modal, not a placeholder.
-                  const isDocsSurface = item.href === "/docs" || item.href === "/sdk" || item.href === "/pricing";
+                  // DOCS/SDK open the in-page docs modal (same behavior
+                  // for both) — the SDK tab renders the real SDK access
+                  // UI inside the modal.
+                  const isDocsSurface = item.href === "/docs" || item.href === "/sdk";
 
                   if (isDocsSurface) {
                     return (
@@ -175,7 +175,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                         key={item.label}
                         type="button"
                         onClick={() => {
-                          setDocsInitialPath(item.href as "/docs" | "/sdk" | "/pricing");
+                          setDocsInitialPath(item.href as "/docs" | "/sdk");
                           setShowDocs(true);
                         }}
                         className="text-[10px] transition-colors sm:text-xs md:text-sm"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export type AccessPath = "/docs" | "/sdk" | "/pricing";
+export type AccessPath = "/docs" | "/sdk";
 
 const navItems = [
   { label: "DOCS", href: "/docs" },

@@ -2,7 +2,6 @@
 
 import { ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 export type ProfileMenuUser = {
@@ -65,14 +64,6 @@ export function ProfileMenu({ user }: { user: ProfileMenuUser }) {
               {user.email}
             </p>
           ) : null}
-          <Link
-            href="/pricing"
-            role="menuitem"
-            className="flex h-8 w-full items-center rounded-xl px-1.5 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
-            style={{ color: "rgba(225, 224, 204, 0.8)" }}
-          >
-            Pricing
-          </Link>
           <button
             type="button"
             role="menuitem"

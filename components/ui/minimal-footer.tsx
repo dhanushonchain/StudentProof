@@ -4,7 +4,6 @@ export function MinimalFooter() {
   const resources = [
     { title: "Docs", href: "/docs" },
     { title: "SDK", href: "/sdk" },
-    { title: "Pricing", href: "/pricing" },
   ];
 
   const company = [

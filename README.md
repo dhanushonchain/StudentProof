@@ -191,7 +191,7 @@ app/
     verify/                 Public credential check          (GET)
     developer/keys/         Developer key management (session-authenticated GET/POST, revoke POST)
   dashboard/                Student dashboard (server page + client)
-  docs/ pricing/ sdk/ login/  Marketing, docs, API-key signup (+ DeveloperKeysPanel)
+  docs/ sdk/ login/  Marketing, docs, API-key signup (+ DeveloperKeysPanel)
   business/                 (empty placeholder)
 components/                 nav-bar, hero, profile-menu, ui
 contracts/
