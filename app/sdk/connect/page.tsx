@@ -84,7 +84,7 @@ export default async function ConnectPage({
           </p>
 
           <div className="mx-auto mt-8 grid max-w-xl gap-4 text-left sm:grid-cols-2">
-            <div className="rounded-2xl p-6" style={cardStyle}>
+            <div className="flex flex-col rounded-2xl p-6" style={cardStyle}>
               <p className="mb-2 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
                 Already verified?
               </p>
@@ -94,10 +94,12 @@ export default async function ConnectPage({
               <p className="mb-5 text-sm leading-7" style={{ color: `${CREAM}85` }}>
                 Sign in with Google using the account associated with your existing StudentProof account.
               </p>
-              <ContinueWithGoogleButton {...flowParams} />
+              <div className="mt-auto">
+                <ContinueWithGoogleButton {...flowParams} />
+              </div>
             </div>
 
-            <div className="rounded-2xl p-6" style={cardStyle}>
+            <div className="flex flex-col rounded-2xl p-6" style={cardStyle}>
               <p className="mb-2 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
                 Not verified yet?
               </p>
@@ -109,7 +111,7 @@ export default async function ConnectPage({
               </p>
               <Link
                 href="/dashboard"
-                className="flex w-full items-center justify-center gap-3 rounded-xl border px-6 py-3 text-sm font-medium transition hover:opacity-80"
+                className="mt-auto flex w-full items-center justify-center gap-3 rounded-xl border px-6 py-3 text-sm font-medium transition hover:opacity-80"
                 style={{ borderColor: `${CREAM}30`, color: CREAM }}
               >
                 Go to verification
