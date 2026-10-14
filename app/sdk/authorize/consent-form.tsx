@@ -32,7 +32,7 @@ export function ConsentForm(params: {
           className="flex w-full items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition hover:opacity-80"
           style={{ background: "#E1E0CC", color: "#050608" }}
         >
-          Allow — share my student status
+          Allow; share my student status
         </button>
       </form>
       <form method="POST" action="/api/sdk/authorize">

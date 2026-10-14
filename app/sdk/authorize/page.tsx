@@ -114,9 +114,6 @@ export default async function AuthorizePage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
       <div className="w-full max-w-lg rounded-3xl bg-black p-10 sm:p-12" style={{ color: CREAM }}>
-        <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
-          {client.name} · StudentProof
-        </p>
         <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Share your student status?</h1>
         <p className="mx-auto mt-4 max-w-md text-sm leading-7" style={{ color: `${CREAM}85` }}>
           <strong className="text-zinc-200">{client.name}</strong> is asking for one fact only: whether

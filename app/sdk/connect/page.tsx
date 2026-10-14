@@ -76,9 +76,6 @@ export default async function ConnectPage({
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
       <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-black">
         <div className="p-10 text-center sm:p-12" style={{ background: "#050608", color: CREAM }}>
-          <p className="mb-6 text-[0.7rem] uppercase tracking-[0.25em]" style={{ color: `${CREAM}60` }}>
-            {client.name} · StudentProof
-          </p>
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {params.mode === "signup" ? "Create your student credential" : "Sign in with StudentProof"}
           </h1>
@@ -119,11 +116,6 @@ export default async function ConnectPage({
               </Link>
             </div>
           </div>
-
-          <p className="mx-auto mt-6 max-w-md text-xs leading-6" style={{ color: `${CREAM}50` }}>
-            Only one fact is ever shared with {client.name}: whether you hold an active
-            StudentProof credential. No email, wallet, or ID details leave StudentProof.
-          </p>
         </div>
       </div>
     </main>
