@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { auth } from "@/auth";
 import { getSdkClientByClientId } from "@/lib/sdk-store";
-import { assertAuthorizeRequest, parseSdkFlowParams, resolveEmailDisplay, SdkRequestError } from "@/lib/sdk-validation";
-import { ContinueWithGoogleButton, ContinueWithSessionButton } from "./connect-actions";
+import { assertAuthorizeRequest, parseSdkFlowParams, SdkRequestError } from "@/lib/sdk-validation";
+import { ContinueWithGoogleButton } from "./connect-actions";
 
 const CREAM = "#E1E0CC";
 
@@ -60,19 +59,6 @@ export default async function ConnectPage({
     return <FlowErrorCard copy={errorCopy("invalid_redirect")} />;
   }
 
-  const session = await auth();
-  const sessionUser = session?.user && typeof session.user === "object" ? session.user : null;
-  // Student sessions only: a business session must never continue into the
-  // student flow (the authorize step re-enforces this server-side).
-  const walletPublicKey =
-    sessionUser && !sessionUser.businessId
-      ? (sessionUser.walletPublicKey as string | undefined)
-      : undefined;
-  const signedIn = typeof walletPublicKey === "string" && walletPublicKey.length > 0;
-  // Display-only account label. Never used for identity resolution — see
-  // resolveEmailDisplay: the address is Google-supplied profile text.
-  const emailDisplay = signedIn ? resolveEmailDisplay(sessionUser) : null;
-
   const flowParams = {
     mode: params.mode,
     clientId: params.clientId,
@@ -111,19 +97,7 @@ export default async function ConnectPage({
               <p className="mb-5 text-sm leading-7" style={{ color: `${CREAM}85` }}>
                 Sign in with Google using the account associated with your existing StudentProof account.
               </p>
-              {signedIn ? (
-                <>
-                  {emailDisplay && (
-                    <p className="mb-4 break-all text-xs leading-6" style={{ color: `${CREAM}60` }}>
-                      Signed in as {emailDisplay.email}
-                      {emailDisplay.verified ? " · verified" : ""}
-                    </p>
-                  )}
-                  <ContinueWithSessionButton {...flowParams} />
-                </>
-              ) : (
-                <ContinueWithGoogleButton {...flowParams} />
-              )}
+              <ContinueWithGoogleButton {...flowParams} />
             </div>
 
             <div className="rounded-2xl p-6" style={cardStyle}>
