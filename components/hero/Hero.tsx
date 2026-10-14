@@ -116,8 +116,6 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
     <>
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
       {showDocs && <DocsModal initialPath={docsInitialPath} onClose={() => setShowDocs(false)} />}
-      {user && <ProfileMenu user={user} />}
-
       <section className="h-screen w-full">
         <div className="relative h-full w-full overflow-hidden">
           
@@ -197,6 +195,7 @@ const PrismaHero = ({ user = null }: { user?: ProfileMenuUser | null }) => {
                     </Link>
                   );
                 })}
+                {user && <ProfileMenu user={user} inline />}
               </div>
             </nav>
           ) : null}

@@ -10,7 +10,7 @@ export type ProfileMenuUser = {
   email?: string;
 };
 
-export function ProfileMenu({ user }: { user: ProfileMenuUser }) {
+export function ProfileMenu({ user, inline = false }: { user: ProfileMenuUser; inline?: boolean }) {
   const initial = user.name.charAt(0).toUpperCase();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -27,10 +27,10 @@ export function ProfileMenu({ user }: { user: ProfileMenuUser }) {
   }, []);
 
   return (
-    <div ref={menuRef} className="fixed right-0 top-0 z-[70] w-14">
+    <div ref={menuRef} className={inline ? "relative" : "fixed right-0 top-0 z-[70] w-14"}>
       <button
         type="button"
-        className="flex h-10 w-full items-center justify-center gap-0.5 rounded-bl-2xl bg-black px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC]"
+        className={`flex h-10 items-center justify-center gap-0.5 bg-black px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E1E0CC] ${inline ? "" : "w-full rounded-bl-2xl"}`}
         aria-haspopup="menu"
         aria-expanded={isProfileMenuOpen}
         onClick={() => setIsProfileMenuOpen((prev) => !prev)}
