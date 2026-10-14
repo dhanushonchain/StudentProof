@@ -91,7 +91,6 @@ export const WordsPullUpMultiStyle = ({ segments, className = "", style }: Words
 const navItems = [
   { label: "DOCS", href: "/docs" },
   { label: "SDK", href: "/sdk" },
-  { label: "PRICING", href: "/pricing" },
   { label: "GitHub", href: "https://github.com/dhanush-devx/StudentProof.git" },
 ];
 

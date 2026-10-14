@@ -9,6 +9,7 @@ export default async function DemoOne() {
     ? {
         name: session.user?.name ?? "Dhanush Yangola",
         image: session.user?.image ?? null,
+        email: session.user?.email ?? undefined,
       }
     : null;
 

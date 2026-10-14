@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 export type ProfileMenuUser = {
@@ -54,16 +55,24 @@ export function ProfileMenu({ user }: { user: ProfileMenuUser }) {
       </button>
 
       {isProfileMenuOpen ? (
-        <div role="menu" className="absolute right-0 z-30 mt-2 w-24 overflow-hidden rounded-2xl bg-black p-1 shadow-xl">
-          <button
-            type="button"
+        <div role="menu" className="absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-2xl bg-black p-1 shadow-xl">
+          {user.email ? (
+            <p
+              className="flex h-8 w-full items-center truncate px-1.5 text-xs"
+              style={{ color: "rgba(225, 224, 204, 0.8)" }}
+              title={user.email}
+            >
+              {user.email}
+            </p>
+          ) : null}
+          <Link
+            href="/pricing"
             role="menuitem"
-            className="flex h-8 w-full items-center gap-1.5 rounded-xl px-1.5 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-full items-center rounded-xl px-1.5 text-left text-xs transition-colors hover:bg-white/10 hover:text-white"
             style={{ color: "rgba(225, 224, 204, 0.8)" }}
           >
-            <Settings className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            Settings
-          </button>
+            Pricing
+          </Link>
           <button
             type="button"
             role="menuitem"
