@@ -65,7 +65,7 @@ export function ProfileMenu({ user, inline = false }: { user: ProfileMenuUser; i
           role="menu"
           className={
             inline
-              ? "absolute right-0 top-full z-30 w-48 overflow-hidden rounded-b-2xl bg-black p-1 pb-2 shadow-xl md:rounded-b-3xl"
+              ? "absolute right-0 top-full z-30 w-48 overflow-hidden rounded-b-2xl bg-black p-1 pb-2 md:rounded-b-3xl"
               : "absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-2xl bg-black p-1 shadow-xl"
           }
         >
