@@ -106,11 +106,8 @@ export function SdkOverviewPanel() {
           <div>
             <strong className="text-white">Walletless “Sign in with StudentProof”:</strong> Allow students to
             prove student status via Google authentication using the OAuth application registration panel below
-            and the intended client library <code style={{ color: CREAM }}>@studentproof/sdk</code>. Please note
-            that public npm installation is{" "}
-            <span style={{ color: "#F0A3A3" }}>upcoming and currently unavailable</span> until the package is
-            published to npm; repository developers can vendor the source code directly from{" "}
-            <code style={{ color: CREAM }}>packages/studentproof-oauth</code>.
+            and the client library <code style={{ color: CREAM }}>@studentproof/sdk</code>, installable with{" "}
+            <code style={{ color: CREAM }}>npm install @studentproof/sdk</code>.
           </div>
         </div>
       </div>
@@ -372,28 +369,12 @@ export function SdkOAuthDocs() {
           style={{ background: "#09090B", border: `1px solid ${CREAM}20`, color: `${CREAM}80` }}
         >
           <p className="font-semibold text-white mb-1">
-            📦 Package availability notice
+            📦 Package
           </p>
           <p>
-            The intended public package name is <code className="font-mono text-white">@studentproof/sdk</code>.
-            Public installation via <code className="font-mono text-white">npm install @studentproof/sdk</code> is{" "}
-            <span style={{ color: "#F0A3A3" }} className="font-semibold">upcoming and currently unavailable</span> until
-            an official release is published to the npm registry. Repository developers can vendor the source code directly
-            from <code className="font-mono text-white">packages/studentproof-oauth</code>.
+            Install the released package with <code className="font-mono text-white">npm install @studentproof/sdk</code>.
           </p>
         </div>
-      </div>
-
-      <div className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
-        <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
-          Try the demo
-        </h2>
-        <p className="text-sm leading-7" style={{ color: `${CREAM}85` }}>
-          A standalone zero-dependency demo website shows the whole login: authorize URL with
-          random state and PKCE, callback validation, server-side exchange, JWKS assertion
-          check, session cookie, and logout. Register an application above to test the demo
-          with your own client ID and client secret.
-        </p>
       </div>
     </>
   );
