@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -84,11 +84,11 @@ export function ProfileMenu({ user, inline = false }: { user: ProfileMenuUser; i
             {initial}
           </span>
         )}
-        <ChevronDown
-          className="h-3.5 w-3.5 transition-transform"
-          style={{ color: "rgba(225, 224, 204, 0.8)", transform: isProfileMenuOpen ? "rotate(180deg)" : undefined }}
-          aria-hidden="true"
-        />
+        {isProfileMenuOpen ? (
+          <ChevronLeft className="h-3.5 w-3.5" style={{ color: "rgba(225, 224, 204, 0.8)" }} aria-hidden="true" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(225, 224, 204, 0.8)" }} aria-hidden="true" />
+        )}
       </button>
 
       {inline ? (
