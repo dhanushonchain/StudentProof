@@ -77,8 +77,6 @@ export default async function SDKPage() {
                 </p>
               </div>
 
-              <AgentIntegrationPrompt />
-
               {/* Get API Access */}
               <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
 
@@ -95,6 +93,8 @@ export default async function SDKPage() {
               <SdkOAuthDocs />
 
               <SdkEndpointDocs />
+
+              <AgentIntegrationPrompt />
             </div>
           </section>
         </div>

@@ -516,13 +516,13 @@ export function SdkModalLayout({
       <section className="min-h-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8 md:px-12 md:py-14">
         <div className="w-full space-y-6">
           <SdkOverviewPanel />
-          <AgentIntegrationPrompt />
           <CredentialsExplained />
           <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
           {businessId && <DeveloperKeysPanel />}
           <DeveloperOAuthPanel businessId={businessId} />
           <SdkEndpointDocs />
           <SdkOAuthDocs />
+          <AgentIntegrationPrompt />
         </div>
       </section>
     </div>
