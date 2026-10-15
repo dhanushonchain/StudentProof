@@ -74,6 +74,10 @@ flowchart LR
 
 There is no Stellar/Soroban code in this repository. The chain is Avalanche Fuji EVM.
 
+![StudentProof Architecture](./public/architecture.svg)
+
+The full system architecture diagram is also available in [Excalidraw format](https://excalidraw.com/#json=studentproof-architecture) or as a local [Excalidraw file](./public/studentproof-architecture.excalidraw).
+
 ## Student verification and issuance flow
 
 1. **Sign in** — `POST` through Auth.js Google provider; a deterministic wallet address is derived for the student (`lib/wallet.ts`, `lib/auth-wallet.ts`).
