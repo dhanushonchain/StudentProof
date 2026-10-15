@@ -278,7 +278,6 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 <div className={`${card} mb-12`} style={cardStyle}>
                   <div className="flex flex-col items-center space-y-4">
                     {[
-                      { emoji: "🔐", title: "Google Login", desc: "Student signs in using a personal Gmail account." },
                       { emoji: "👛", title: "Auto Wallet", desc: "A wallet is derived from your Google account on first sign-in." },
                       { emoji: "🔎", title: "Reclaim Verification", desc: "Student proves their enrollment by logging into their university portal — a zero-knowledge proof is generated, no screenshots or ID uploads involved." },
                       { emoji: "🎓", title: "Credential Issued", desc: "A soulbound blockchain credential is issued to the student's wallet." },
