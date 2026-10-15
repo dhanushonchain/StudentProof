@@ -313,8 +313,40 @@ const { assertion, expires_in } = await res.json();
 // Verify it against GET https://studentproof.app/api/sdk/jwks (public JWKS):
 // check the signature with the matching kid, then iss, aud (your client id),
 // boolean vb, and exp. Only { valid: vb === true } gates access — any error
-// path fails closed. See the standalone demo for a complete zero-dependency
-// example (state + PKCE + exchange + JWKS verify + session).`;
+// path fails closed.`;
+
+const PACKAGE_VERIFY_EXAMPLE = `import { exchangeAuthorizationCode } from "@studentproof/sdk";
+import { verifyStudentAssertion } from "@studentproof/sdk/server";
+
+// Server-side only. codeVerifier is the PKCE verifier you stored for this login.
+const { assertion } = await exchangeAuthorizationCode({
+  code,
+  redirectUri: "https://yourapp.com/auth/callback",
+  clientId: "sp_client_your_id",
+  clientSecret: process.env.STUDENTPROOF_CLIENT_SECRET!,
+  codeVerifier,
+});
+
+// Throws on any failure (bad signature, unknown kid, wrong iss/aud, expired).
+// Treat a throw as "not verified".
+const { valid, sub } = await verifyStudentAssertion({
+  assertion,
+  expectedAud: "sp_client_your_id",
+  expectedIss: "https://studentproof.app",
+});
+
+if (valid) {
+  // Grant the student benefit. sub is a stable, per-app identifier for this student.
+}`;
+
+const TOKEN_ERRORS: { code: string; meaning: string }[] = [
+  { code: "invalid_request (400)", meaning: "A required field is missing or malformed." },
+  { code: "invalid_client (401)", meaning: "Unknown client_id or wrong client_secret. Check both." },
+  { code: "invalid_grant (400)", meaning: "The code is unknown, expired (10 minutes), already used, or does not match the redirect_uri or code_verifier. Start the login again." },
+  { code: "temporarily_unavailable (502)", meaning: "The credential check could not run. The code is not consumed, so retry shortly with the same code." },
+  { code: "server_error (500)", meaning: "StudentProof is misconfigured. Retry later." },
+  { code: "429 / 503", meaning: "Rate limited or unavailable. Back off using the Retry-After header." },
+];
 
 export function SdkOAuthDocs() {
   return (
@@ -353,6 +385,47 @@ export function SdkOAuthDocs() {
           can mint one — a verifier can never forge your students&apos; status.
         </p>
         <CodeBlock>{TOKEN_EXAMPLE}</CodeBlock>
+      </div>
+
+      <div id="oauth-verify" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+        <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
+          Verify the assertion
+        </h2>
+        <p className="mb-4 text-sm leading-7" style={{ color: `${CREAM}85` }}>
+          The assertion is valid for 5 minutes. Only grant access when{" "}
+          <code style={{ color: CREAM }}>valid</code> is <code style={{ color: CREAM }}>true</code>. The check
+          covers the Ed25519 signature (using the key matching its <code style={{ color: CREAM }}>kid</code> from
+          the public JWKS), <code style={{ color: CREAM }}>iss</code>, <code style={{ color: CREAM }}>aud</code>,
+          the <code style={{ color: CREAM }}>vb</code> flag, and the lifetime with ±60 seconds of clock skew.
+        </p>
+        <CodeBlock>{PACKAGE_VERIFY_EXAMPLE}</CodeBlock>
+      </div>
+
+      <div id="oauth-errors" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+        <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
+          Token endpoint errors
+        </h2>
+        <div className="space-y-3 text-sm leading-7" style={{ color: `${CREAM}85` }}>
+          {TOKEN_ERRORS.map((row) => (
+            <div key={row.code} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+              <code className="shrink-0 font-mono text-xs sm:w-72" style={{ color: CREAM }}>
+                {row.code}
+              </code>
+              <span>{row.meaning}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div id="oauth-redirect" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
+        <h2 className="mb-3 text-lg font-semibold" style={{ color: CREAM }}>
+          Redirect URIs
+        </h2>
+        <p className="text-sm leading-7" style={{ color: `${CREAM}85` }}>
+          The <code style={{ color: CREAM }}>redirect_uri</code> must exactly match one URI you registered for your
+          application. Production URIs must use <code style={{ color: CREAM }}>https</code>.{" "}
+          <code style={{ color: CREAM }}>http://localhost</code> is accepted for local development only.
+        </p>
       </div>
 
       <div id="oauth-package" className="rounded-2xl p-10" style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05` }}>
