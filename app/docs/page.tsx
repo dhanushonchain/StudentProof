@@ -274,31 +274,6 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                   />
                 </div>
 
-                {/* Flow */}
-                <div className={`${card} mb-12`} style={cardStyle}>
-                  <div className="flex flex-col items-center space-y-4">
-                    {[
-                      { emoji: "👛", title: "Auto Wallet", desc: "A wallet is derived from your Google account on first sign-in." },
-                      { emoji: "🔎", title: "Reclaim Verification", desc: "Student proves their enrollment by logging into their university portal — a zero-knowledge proof is generated, no screenshots or ID uploads involved." },
-                      { emoji: "🎓", title: "Credential Issued", desc: "A soulbound blockchain credential is issued to the student's wallet." },
-                      { emoji: "🌍", title: "Third-Party Applications", desc: "Applications verify student status using the StudentProof SDK without requesting the original ID card." },
-                    ].map((step, i, arr) => (
-                      <div key={step.title} className="flex flex-col items-center w-full max-w-sm">
-                        <div
-                          className="w-full rounded-xl p-5 text-center"
-                          style={{ border: `1px solid ${CREAM}18`, background: `${CREAM}07` }}
-                        >
-                          <div className="text-2xl mb-2">{step.emoji}</div>
-                          <h3 style={{ ...h3Style, marginBottom: "0.25rem", fontSize: "1rem" }}>{step.title}</h3>
-                          <p style={{ ...body, fontSize: "0.8rem" }}>{step.desc}</p>
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div className="text-2xl my-2" style={{ color: `${CREAM}40` }}>↓</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Components */}
                 <h2 style={h2Style}>Core Components</h2>
