@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { TopAccessNav } from "@/components/nav-bar/nav-bar";
 import DeveloperKeysPanel from "./DeveloperKeysPanel";
 import DeveloperOAuthPanel from "./DeveloperOAuthPanel";
+import AgentIntegrationPrompt from "./AgentIntegrationPrompt";
 import { SdkAccessPanel, SdkEndpointDocs, SdkOAuthDocs } from "./sdk-content";
 
 const CREAM = "#E1E0CC";
@@ -75,6 +76,8 @@ export default async function SDKPage() {
                   as <code style={{ color: CREAM }}>@studentproof/sdk</code> on npm.
                 </p>
               </div>
+
+              <AgentIntegrationPrompt />
 
               {/* Get API Access */}
               <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />

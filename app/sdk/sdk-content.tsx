@@ -9,6 +9,7 @@ import BusinessLoginButton from "@/app/api/auth/BusinessLoginButton";
 import CredentialsExplained from "./CredentialsExplained";
 import DeveloperKeysPanel from "./DeveloperKeysPanel";
 import DeveloperOAuthPanel from "./DeveloperOAuthPanel";
+import AgentIntegrationPrompt from "./AgentIntegrationPrompt";
 
 const CREAM = "#E1E0CC";
 const BG = "#050608";
@@ -515,6 +516,7 @@ export function SdkModalLayout({
       <section className="min-h-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8 md:px-12 md:py-14">
         <div className="w-full space-y-6">
           <SdkOverviewPanel />
+          <AgentIntegrationPrompt />
           <CredentialsExplained />
           <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
           {businessId && <DeveloperKeysPanel />}
