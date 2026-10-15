@@ -297,12 +297,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
             {activeSection === "team" && (
               <>
                 <p style={label}>Documentation</p>
-                <h1 style={h1Style}>Meet the<br />Team</h1>
-                <p style={lead}>
-                  StudentProof is currently being designed and developed as an academic project with
-                  the vision of making student verification reusable, privacy-preserving and accessible
-                  worldwide.
-                </p>
+                <h1 style={h1Style}>Meet the Team</h1>
 
                 {/* Founder */}
                 <div className={`${card} mb-10`} style={cardStyle}>
@@ -315,13 +310,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                     </div>
                     <div>
                       <h2 style={{ ...h2Style, marginBottom: "0.25rem" }}>Dhanush Yangola</h2>
-                      <p className="mb-4 text-sm" style={{ color: `${CREAM}60` }}>Founder & Full Stack Blockchain Developer</p>
-                      <p style={body}>
-                        Dhanush is building StudentProof with the goal of simplifying student
-                        verification for educational institutions and developers. The platform focuses
-                        on reusable credentials, blockchain interoperability, privacy-first verification
-                        and developer-friendly APIs.
-                      </p>
+                      <p className="text-sm" style={{ color: `${CREAM}60` }}>Founder & Full Stack Blockchain Developer</p>
                     </div>
                   </div>
                 </div>
@@ -336,30 +325,29 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                   </p>
                 </div>
 
-                {/* Mission */}
-                <h2 style={h2Style}>Mission</h2>
-                <div className="grid md:grid-cols-3 gap-5 mb-10">
-                  {[
-                    { icon: "🎓", title: "Students", desc: "Verify once and reuse credentials anywhere." },
-                    { icon: "🏫", title: "Universities", desc: "Issue trusted credentials without maintaining verification infrastructure." },
-                    { icon: "💻", title: "Developers", desc: "Integrate a single SDK to instantly verify students." },
-                  ].map((item) => (
-                    <div key={item.title} className={card} style={cardStyle}>
-                      <div className="text-3xl mb-3">{item.icon}</div>
-                      <h3 style={h3Style}>{item.title}</h3>
-                      <p style={body}>{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-
                 {/* Tech Stack */}
                 <h2 style={h2Style}>Technology Stack</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["Next.js", "React", "Tailwind CSS", "TypeScript", "Reclaim Protocol", "Solidity", "Avalanche C-Chain", "viem", "PostgreSQL", "Prisma", "Google OAuth", "Node.js"].map((tech) => (
+                  {(
+                    [
+                      ["Next.js", "#f38ba8"],
+                      ["React", "#89dceb"],
+                      ["Tailwind CSS", "#94e2d5"],
+                      ["TypeScript", "#89b4fa"],
+                      ["Reclaim Protocol", "#fab387"],
+                      ["Solidity", "#cba6f7"],
+                      ["Avalanche C-Chain", "#eba0ac"],
+                      ["viem", "#f9e2af"],
+                      ["PostgreSQL", "#74c7ec"],
+                      ["Prisma", "#b4befe"],
+                      ["Google OAuth", "#a6e3a1"],
+                      ["Node.js", "#f5c2e7"],
+                    ] as const
+                  ).map(([tech, color]) => (
                     <div
                       key={tech}
-                      className="rounded-xl py-4 text-center text-sm transition-all duration-200"
-                      style={{ border: `1px solid ${CREAM}15`, background: `${CREAM}05`, color: `${CREAM}80`, letterSpacing: "-0.01em" }}
+                      className="rounded-xl py-4 text-center text-sm font-medium transition-all duration-200 hover:scale-[1.03]"
+                      style={{ border: `1px solid ${color}80`, background: `${color}22`, color, letterSpacing: "-0.01em" }}
                     >
                       {tech}
                     </div>
