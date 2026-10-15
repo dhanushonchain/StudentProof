@@ -72,11 +72,7 @@ flowchart LR
 | Contracts | Foundry (Solidity, OpenZeppelin): soulbound credential registry + provider registry |
 | Email | Resend (welcome and API-key emails) |
 
-There is no Stellar/Soroban code in this repository. The chain is Avalanche Fuji EVM.
-
 ![StudentProof Architecture](./public/architecture.svg)
-
-The full system architecture diagram is also available in [Excalidraw format](https://excalidraw.com/#json=studentproof-architecture) or as a local [Excalidraw file](./public/studentproof-architecture.excalidraw).
 
 ## Student verification and issuance flow
 
@@ -371,19 +367,9 @@ The `*.selfcheck.ts` files are dependency-free assert scripts (the repo has no a
 
 ## Security and privacy
 
-- Never commit `.env*`, private keys, or API secrets; `.env` files in this repo are gitignored and contain no committed values.
 - `server-only` modules (`credential-contract`, `reclaim`, wallet code) are dynamically imported so secrets never enter the Edge/client bundle.
 - API keys are stored as SHA-256 hashes and shown once; retry/proof endpoints require the wallet session; foreign-record access returns 404 to prevent id probing.
 - Only error *categories* are persisted or shown; raw RPC output, URLs, keys, stack traces, and raw Reclaim proofs never reach the UI, logs-as-feature, or the database. Console server logs may include operational errors — treat log aggregation as sensitive.
 - Student wallets derive from a single server secret: a leak compromises all derived wallets. Use a secret manager and plan KMS/HSM custody before anything of value touches these wallets.
 - The minter key can mint for any address by design (the contract cannot check off-chain proofs) — guard it, monitor for unexpected mints, and document a rotation runbook.
 - Testnet only: credentials, addresses, and balances above are Avalanche Fuji. Proof validation is real cryptography; "reusable verification" discloses only the boolean credential status to relying apps — do not claim broader zero-knowledge guarantees.
-
-## Roadmap
-
-1. Live E2E rehearsal (login → real proof → Fuji mint → dashboard → `/api/verify`) with read-only contract checks first.
-2. Apply the issuance migration to the shared database (approved `prisma migrate deploy`).
-3. Key rotation/revocation, retry rate limits, multi-instance claim observation.
-4. Real SDK client library vs documented HTTP API (decision + guides).
-5. `/terms`, `/privacy`, `app/business` resolution; `.env.example`; CI; lint-scope fix; `LICENSE` file (none exists today — the old MIT badge was inaccurate).
-6. Monitoring for mints, expiry notifications, multi-credential UI.
