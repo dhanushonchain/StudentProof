@@ -103,7 +103,7 @@ export default function AgentIntegrationPrompt() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h2 className="text-lg font-semibold" style={{ color: CREAM }}>
-            AI / Code agent integration prompt
+            SDK integration prompt
           </h2>
           <p className="mt-1 text-sm leading-6" style={{ color: `${CREAM}85` }}>
             Copy this prompt and paste it into Cursor, Claude Code, or any other AI coding agent to
