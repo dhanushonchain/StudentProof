@@ -263,14 +263,14 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
 
                 {/* System diagram */}
                 <h2 style={h2Style}>System Diagram</h2>
-                <div className={`${card} mb-12 overflow-x-auto`} style={{ ...cardStyle, background: "#ffffff" }}>
+                <div className={`${card} mb-12`} style={{ ...cardStyle, background: "#ffffff" }}>
                   <Image
                     src="/architecture.svg"
                     alt="StudentProof system architecture: users and integrators, the Next.js app, core logic, and external services with the PostgreSQL database"
                     width={1800}
                     height={1130}
                     unoptimized
-                    className="h-auto w-full min-w-[1100px]"
+                    className="h-auto w-full"
                   />
                 </div>
 
@@ -278,7 +278,6 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 <div className={`${card} mb-12`} style={cardStyle}>
                   <div className="flex flex-col items-center space-y-4">
                     {[
-                      { emoji: "👨‍🎓", title: "Student", desc: "Creates a StudentProof account." },
                       { emoji: "🔐", title: "Google Login", desc: "Student signs in using a personal Gmail account." },
                       { emoji: "👛", title: "Auto Wallet", desc: "A wallet is derived from your Google account on first sign-in." },
                       { emoji: "🔎", title: "Reclaim Verification", desc: "Student proves their enrollment by logging into their university portal — a zero-knowledge proof is generated, no screenshots or ID uploads involved." },
