@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1130" viewBox="0 0 1800 1130">
+<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#495057"/></marker></defs>
+<rect width="1800" height="1130" fill="#ffffff"/><text x="60" y="50" font-size="30" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="60" dy="0">StudentProof — system architecture</tspan></text>
+<rect x="40" y="60" width="300" height="840" rx="0" fill="transparent" stroke="#868e96" stroke-width="1" stroke-dasharray="6 4"/>
+<text x="56" y="94" font-size="22" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="56" dy="0">Users &amp; integrators</tspan></text>
+<rect x="400" y="60" width="440" height="840" rx="0" fill="transparent" stroke="#868e96" stroke-width="1" stroke-dasharray="6 4"/>
+<text x="416" y="94" font-size="22" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="416" dy="0">StudentProof — Next.js app (Vercel)</tspan></text>
+<rect x="900" y="60" width="380" height="840" rx="0" fill="transparent" stroke="#868e96" stroke-width="1" stroke-dasharray="6 4"/>
+<text x="916" y="94" font-size="22" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="916" dy="0">Core logic (lib/)</tspan></text>
+<rect x="1340" y="60" width="400" height="840" rx="0" fill="transparent" stroke="#868e96" stroke-width="1" stroke-dasharray="6 4"/>
+<text x="1356" y="94" font-size="22" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1356" dy="0">External services &amp; chain</tspan></text>
+<rect x="60" y="150" width="260" height="120" rx="14" fill="#a5d8ff" stroke="#1e1e1e" stroke-width="2" />
+<text x="76" y="182" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="76" dy="0">Student (browser)</tspan></text>
+<text x="76" y="208" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="76" dy="0">Signs in, verifies status,</tspan><tspan x="76" dy="17.5">receives credential</tspan></text>
+<rect x="60" y="450" width="260" height="120" rx="14" fill="#a5d8ff" stroke="#1e1e1e" stroke-width="2" />
+<text x="76" y="482" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="76" dy="0">Business / developer</tspan></text>
+<text x="76" y="508" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="76" dy="0">Gets API key on /sdk,</tspan><tspan x="76" dy="17.5">calls /api/verify</tspan></text>
+<rect x="60" y="750" width="260" height="120" rx="14" fill="#a5d8ff" stroke="#1e1e1e" stroke-width="2" />
+<text x="76" y="782" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="76" dy="0">Third-party app backend</tspan></text>
+<text x="76" y="808" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="76" dy="0">Verify API, token exchange,</tspan><tspan x="76" dy="17.5">JWKS signature check</tspan></text>
+<rect x="420" y="150" width="400" height="120" rx="14" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="2" />
+<text x="436" y="182" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="436" dy="0">Pages</tspan></text>
+<text x="436" y="208" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="436" dy="0">/  ·  /dashboard  ·  /sdk</tspan><tspan x="436" dy="17.5">/sdk/connect  ·  /sdk/authorize</tspan></text>
+<rect x="420" y="300" width="400" height="120" rx="14" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="2" />
+<text x="436" y="332" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="436" dy="0">/api/auth/*  (Auth.js v5)</tspan></text>
+<text x="436" y="358" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="436" dy="0">Google providers: student + business.</tspan><tspan x="436" dy="17.5">jwt callback creates user and wallet</tspan></text>
+<rect x="420" y="450" width="400" height="120" rx="14" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="2" />
+<text x="436" y="482" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="436" dy="0">/api/verification/*</tspan></text>
+<text x="436" y="508" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="436" dy="0">start · callback (webhook) · status · retry</tspan></text>
+<rect x="420" y="600" width="400" height="120" rx="14" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="2" />
+<text x="436" y="632" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="436" dy="0">/api/sdk/*</tspan></text>
+<text x="436" y="658" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="436" dy="0">authorize (consent) · token · jwks</tspan></text>
+<rect x="420" y="750" width="400" height="120" rx="14" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="2" />
+<text x="436" y="782" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="436" dy="0">/api/verify  ·  /api/developer/*</tspan></text>
+<text x="436" y="808" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="436" dy="0">API-key check · keys · OAuth clients</tspan></text>
+<rect x="920" y="150" width="340" height="120" rx="14" fill="#ffec99" stroke="#1e1e1e" stroke-width="2" />
+<text x="936" y="182" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="936" dy="0">Issuance orchestrator</tspan></text>
+<text x="936" y="208" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="936" dy="0">atomic claim · chain reconcile</tspan><tspan x="936" dy="17.5">bounded retries (5)</tspan></text>
+<rect x="920" y="300" width="340" height="120" rx="14" fill="#ffec99" stroke="#1e1e1e" stroke-width="2" />
+<text x="936" y="332" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="936" dy="0">Proof verification</tspan></text>
+<text x="936" y="358" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="936" dy="0">verifyProof against</tspan><tspan x="936" dy="17.5">the SAMARTH provider id</tspan></text>
+<rect x="920" y="450" width="340" height="120" rx="14" fill="#ffec99" stroke="#1e1e1e" stroke-width="2" />
+<text x="936" y="482" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="936" dy="0">Wallet derivation</tspan></text>
+<text x="936" y="508" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="936" dy="0">key from Google sub +</tspan><tspan x="936" dy="17.5">server secret (no storage)</tspan></text>
+<rect x="920" y="600" width="340" height="120" rx="14" fill="#ffec99" stroke="#1e1e1e" stroke-width="2" />
+<text x="936" y="632" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="936" dy="0">SDK assertion signer</tspan></text>
+<text x="936" y="658" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="936" dy="0">Ed25519 over v2 payload,</tspan><tspan x="936" dy="17.5">pairwise subject per client</tspan></text>
+<rect x="920" y="750" width="340" height="120" rx="14" fill="#ffec99" stroke="#1e1e1e" stroke-width="2" />
+<text x="936" y="782" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="936" dy="0">Rate limiter</tspan></text>
+<text x="936" y="808" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="936" dy="0">Valkey sliding window</tspan><tspan x="936" dy="17.5">per API key / client</tspan></text>
+<rect x="1360" y="150" width="360" height="120" rx="14" fill="#ffc9c9" stroke="#1e1e1e" stroke-width="2" />
+<text x="1376" y="182" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1376" dy="0">Google OAuth</tspan></text>
+<text x="1376" y="208" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="1376" dy="0">student + business sign-in</tspan></text>
+<rect x="1360" y="300" width="360" height="120" rx="14" fill="#ffc9c9" stroke="#1e1e1e" stroke-width="2" />
+<text x="1376" y="332" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1376" dy="0">Reclaim Protocol</tspan></text>
+<text x="1376" y="358" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="1376" dy="0">in-browser portal proof</tspan><tspan x="1376" dy="17.5">(SAMARTH provider)</tspan></text>
+<rect x="1360" y="450" width="360" height="120" rx="14" fill="#d0bfff" stroke="#1e1e1e" stroke-width="2" />
+<text x="1376" y="482" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1376" dy="0">Avalanche Fuji (C-Chain)</tspan></text>
+<text x="1376" y="508" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="1376" dy="0">StudentCredentialRegistry</tspan><tspan x="1376" dy="17.5">(soulbound ERC-721)</tspan><tspan x="1376" dy="17.5">hasValidCredential · mint · revoke</tspan></text>
+<rect x="1360" y="600" width="360" height="120" rx="14" fill="#ffc9c9" stroke="#1e1e1e" stroke-width="2" />
+<text x="1376" y="632" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1376" dy="0">Resend</tspan></text>
+<text x="1376" y="658" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="1376" dy="0">welcome + API-key emails</tspan></text>
+<rect x="1360" y="750" width="360" height="120" rx="14" fill="#ffc9c9" stroke="#1e1e1e" stroke-width="2" />
+<text x="1376" y="782" font-size="20" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="1376" dy="0">Valkey (Redis)</tspan></text>
+<text x="1376" y="808" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="1376" dy="0">rate-limit counters</tspan></text>
+<rect x="60" y="930" width="1660" height="110" rx="14" fill="#e9ecef" stroke="#1e1e1e" stroke-width="2" />
+<text x="76" y="964" font-size="22" font-family="Georgia, serif" fill="#1e1e1e" xml:space="preserve"><tspan x="76" dy="0">PostgreSQL (Aiven) via Prisma v7</tspan></text>
+<text x="76" y="990" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="76" dy="0">User · VerificationRecord · Credential · ActivityEvent · Business · BusinessApiKey · ApiUsageEvent · SdkClient · SdkAuthCode</tspan></text>
+<polyline points="320,210 420,210" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="323" y="187" width="56.96000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="326" y="201" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="326" dy="0">sign in</tspan></text>
+<polyline points="190,150 190,125 1540,125 1540,150" fill="none" stroke="#c92a2a" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="637" y="103" width="107.92000000000002" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="640" y="117" font-size="13" font-family="Georgia, serif" fill="#c92a2a" xml:space="preserve"><tspan x="640" dy="0">Google sign-in</tspan></text>
+<polyline points="190,270 190,280 1325,280 1325,360 1360,360" fill="none" stroke="#c92a2a" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="325" y="249" width="93.36000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="328" y="263" font-size="13" font-family="Georgia, serif" fill="#c92a2a" xml:space="preserve"><tspan x="328" dy="0">prove status</tspan></text>
+<polyline points="320,510 370,510 370,360 420,360" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="375" y="429" width="56.96000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="378" y="443" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="378" dy="0">sign-in</tspan></text>
+<polyline points="620,300 620,292 1345,292 1345,210 1360,210" fill="none" stroke="#c92a2a" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="1267" y="235" width="42.400000000000006" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="1270" y="249" font-size="13" font-family="Georgia, serif" fill="#c92a2a" xml:space="preserve"><tspan x="1270" dy="0">OAuth</tspan></text>
+<polyline points="820,540 870,540 870,360 920,360" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="821" y="519" width="64.24000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="824" y="533" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="824" dy="0">validate</tspan></text>
+<polyline points="1540,420 1540,435 840,435 840,485 820,485" fill="none" stroke="#c92a2a" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="997" y="436" width="100.64000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="1000" y="450" font-size="13" font-family="Georgia, serif" fill="#c92a2a" xml:space="preserve"><tspan x="1000" dy="0">webhook proof</tspan></text>
+<polyline points="1090,300 1090,270" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<polyline points="1260,230 1310,230 1310,550 1360,550" fill="none" stroke="#6741d9" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="1263" y="493" width="35.120000000000005" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="1266" y="507" font-size="13" font-family="Georgia, serif" fill="#6741d9" xml:space="preserve"><tspan x="1266" dy="0">mint</tspan></text>
+<polyline points="320,810 420,810" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="323" y="787" width="71.52000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="326" y="801" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="326" dy="0">x-api-key</tspan></text>
+<polyline points="820,810 920,810" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="823" y="787" width="78.80000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="826" y="801" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="826" dy="0">rate limit</tspan></text>
+<polyline points="1260,810 1360,810" fill="none" stroke="#c92a2a" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="1263" y="787" width="64.24000000000001" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="1266" y="801" font-size="13" font-family="Georgia, serif" fill="#c92a2a" xml:space="preserve"><tspan x="1266" dy="0">counters</tspan></text>
+<polyline points="820,660 920,660" fill="none" stroke="#495057" stroke-width="1.5"  marker-end="url(#ah)"/>
+<rect x="823" y="637" width="35.120000000000005" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="826" y="651" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="826" dy="0">sign</tspan></text>
+<polyline points="620,870 620,930" fill="none" stroke="#495057" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<rect x="627" y="894" width="107.92000000000002" height="18.25" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="2" />
+<text x="630" y="908" font-size="13" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="630" dy="0">reads / writes</tspan></text>
+<text x="60" y="1084" font-size="14" font-family="Georgia, serif" fill="#495057" xml:space="preserve"><tspan x="60" dy="0">Solid: request / data flow   ·   Dashed: database access   ·   Red: external services   ·   Purple: on-chain mint</tspan></text></svg>

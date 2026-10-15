@@ -261,13 +261,26 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                   status without exposing personal information again.
                 </p>
 
+                {/* System diagram */}
+                <h2 style={h2Style}>System Diagram</h2>
+                <div className={`${card} mb-12 overflow-x-auto`} style={{ ...cardStyle, background: "#ffffff" }}>
+                  <Image
+                    src="/architecture.svg"
+                    alt="StudentProof system architecture: users and integrators, the Next.js app, core logic, and external services with the PostgreSQL database"
+                    width={1800}
+                    height={1130}
+                    unoptimized
+                    className="h-auto w-full min-w-[1100px]"
+                  />
+                </div>
+
                 {/* Flow */}
                 <div className={`${card} mb-12`} style={cardStyle}>
                   <div className="flex flex-col items-center space-y-4">
                     {[
                       { emoji: "👨‍🎓", title: "Student", desc: "Creates a StudentProof account." },
                       { emoji: "🔐", title: "Google Login", desc: "Student signs in using a personal Gmail account." },
-                      { emoji: "👛", title: "Auto Wallet", desc: "An account abstraction wallet is created automatically." },
+                      { emoji: "👛", title: "Auto Wallet", desc: "A wallet is derived from your Google account on first sign-in." },
                       { emoji: "🔎", title: "Reclaim Verification", desc: "Student proves their enrollment by logging into their university portal — a zero-knowledge proof is generated, no screenshots or ID uploads involved." },
                       { emoji: "🎓", title: "Credential Issued", desc: "A soulbound blockchain credential is issued to the student's wallet." },
                       { emoji: "🌍", title: "Third-Party Applications", desc: "Applications verify student status using the StudentProof SDK without requesting the original ID card." },
@@ -294,7 +307,7 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 <div className="grid md:grid-cols-2 gap-5">
                   {[
                     { title: "Google Authentication", desc: "Students authenticate using their personal Gmail account, eliminating the need for university-issued email addresses." },
-                    { title: "Account Abstraction Wallet", desc: "Wallets are created automatically, allowing students to use blockchain without managing private keys." },
+                    { title: "Derived Wallet", desc: "A wallet is derived from your Google account, so students use blockchain without managing private keys." },
                     { title: "Reclaim zkTLS Verification", desc: "Enrollment is proven directly from the university portal using zero-knowledge proofs, without ever exposing login credentials or personal data to StudentProof." },
                     { title: "Blockchain Credential", desc: "Verified students receive a soulbound (non-transferable) credential that stays valid until explicitly revoked by the issuing authority." },
                   ].map((item) => (
