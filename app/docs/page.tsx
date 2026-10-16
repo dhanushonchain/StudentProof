@@ -302,12 +302,6 @@ const DocsContent = ({ modal = false, onClose }: { modal?: boolean; onClose?: ()
                 {/* Founder */}
                 <div className={`${card} mb-10`} style={cardStyle}>
                   <div className="flex flex-col md:flex-row gap-8 items-center">
-                    <div
-                      className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold shrink-0"
-                      style={{ background: `${CREAM}15`, color: CREAM, border: `1px solid ${CREAM}25` }}
-                    >
-                      DY
-                    </div>
                     <div>
                       <h2 style={{ ...h2Style, marginBottom: "0.25rem" }}>Dhanush Yangola</h2>
                       <p className="text-sm" style={{ color: `${CREAM}60` }}>Founder & Full Stack Blockchain Developer</p>
