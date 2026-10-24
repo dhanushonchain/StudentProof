@@ -1,0 +1,24 @@
+name: Keep-alive
+
+on:
+  schedule:
+    # Hourly, on the hour (UTC). Keeps the free-tier database registering
+    # continuous activity so it is not powered off / archived for idleness.
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/keep-alive
+        env:
+          TOKEN: ${{ secrets.KEEP_ALIVE_TOKEN }}
+        run: |
+          code=$(curl -sS -o /tmp/keepalive-body -w "%{http_code}" --max-time 30 \
+            "https://studentproof.app/api/keep-alive?token=$TOKEN")
+          cat /tmp/keepalive-body
+          echo
+          # 503 means the database was unreachable; a missing secret shows as
+          # 401. Either way the job goes red so the outage is visible here.
+          [ "$code" = "200" ]
