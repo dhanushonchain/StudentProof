@@ -464,6 +464,7 @@ export function SdkModalLayout({
   freshApiKey?: string | null;
   onClose?: () => void;
 }) {
+  const accessPanel = <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />;
   return (
     <div className="relative flex h-full flex-col md:flex-row" style={{ background: BG, color: CREAM }}>
       {onClose && (
@@ -517,9 +518,10 @@ export function SdkModalLayout({
         <div className="w-full space-y-6">
           <SdkOverviewPanel />
           <CredentialsExplained />
+          {businessId && accessPanel}
           {businessId && <DeveloperKeysPanel />}
           <DeveloperOAuthPanel businessId={businessId} />
-          <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
+          {!businessId && accessPanel}
           <SdkEndpointDocs />
           <SdkOAuthDocs />
           <AgentIntegrationPrompt />

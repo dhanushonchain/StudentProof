@@ -14,6 +14,7 @@ export default async function SDKPage() {
   const session = await auth();
   const businessId = session?.user?.businessId;
   const freshApiKey = session?.user?.businessApiKeyOnce;
+  const accessPanel = <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
@@ -77,6 +78,8 @@ export default async function SDKPage() {
                 </p>
               </div>
 
+              {businessId && accessPanel}
+
               <div id="api-keys">
                 {/* Self-serve key management for signed-in developers */}
                 {businessId && <DeveloperKeysPanel />}
@@ -89,8 +92,7 @@ export default async function SDKPage() {
 
               <SdkOAuthDocs />
 
-              {/* Get API Access */}
-              <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
+              {!businessId && accessPanel}
 
               <SdkEndpointDocs />
 
