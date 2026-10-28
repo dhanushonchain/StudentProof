@@ -517,9 +517,9 @@ export function SdkModalLayout({
         <div className="w-full space-y-6">
           <SdkOverviewPanel />
           <CredentialsExplained />
-          <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
           {businessId && <DeveloperKeysPanel />}
           <DeveloperOAuthPanel businessId={businessId} />
+          <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
           <SdkEndpointDocs />
           <SdkOAuthDocs />
           <AgentIntegrationPrompt />

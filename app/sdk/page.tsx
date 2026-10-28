@@ -77,9 +77,6 @@ export default async function SDKPage() {
                 </p>
               </div>
 
-              {/* Get API Access */}
-              <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
-
               <div id="api-keys">
                 {/* Self-serve key management for signed-in developers */}
                 {businessId && <DeveloperKeysPanel />}
@@ -91,6 +88,9 @@ export default async function SDKPage() {
               </div>
 
               <SdkOAuthDocs />
+
+              {/* Get API Access */}
+              <SdkAccessPanel businessId={businessId} freshApiKey={freshApiKey} />
 
               <SdkEndpointDocs />
 
